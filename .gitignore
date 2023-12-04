@@ -1,0 +1,13 @@
+**/*(busy)
+**/*.blg
+**/*.bbl
+**/*.bib.bak
+**/*.aux
+**/*.log
+**/*.out
+**/*.tex.bak
+*/*/*.aux
+*/*/*.log
+*/*/*.out
+*/*/*.tex.bak
+**/*.DS_Store
