@@ -56,6 +56,17 @@ def read_vcf(file, sample = 'call', q = None):
     else:
         q.put(df)
 
+def parse_vcf(file, sample = 'call', q = None, 
+              info_cols = ['EAF', 'INFO_SCORE'], attribute = 'info', fmt = 'format', drop_attribute = True, drop_lst = ['id', 'qual', 'filter']):
+    df = read_vcf(file)
+    df = extract_info(df, info_cols = info_cols, attribute = attribute, drop_attribute = drop_attribute)
+    df = extract_format(df, sample, fmt = fmt)
+    df = drop_cols(df, drop_lst = drop_lst)
+    if q is None:
+        return df
+    else:
+        q.put(df)
+
 def read_af(file, q = None):
     df = pd.read_csv(file, header = None, sep = '\t', names = ['chr', 'pos', 'ref', 'alt', 'MAF'],
                       dtype = {
