@@ -1,3 +1,12 @@
+*.pyc
+/dist/
+/*.egg-info
+build/
+.ipynb_checkpoints/
+.cache/
+.vscode/
+.DS_Store
+
 **/*(busy)
 **/*.blg
 **/*.bbl
