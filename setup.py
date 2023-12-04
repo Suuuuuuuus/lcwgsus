@@ -10,4 +10,4 @@ setup(name='lcwgsus',
       install_requires=["multiprocessing", "pandas", "numpy", "matplotlib", "seaborn", "statsmodels", "scipy"],
       packages=['lcwgsus'],
       zip_safe=False,
-      url="", license="MIT")
+      url="https://github.com/Suuuuuuuus/lcwgsus", license="MIT")
