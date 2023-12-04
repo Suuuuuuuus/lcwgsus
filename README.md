@@ -22,6 +22,6 @@ Installation requires [numpy](https://numpy.org/), [pandas](https://pandas.pydat
 Development
 -----------
 
-See the main site of lcwgsus: https://github.com/Suuuuuuuus/lcwgsus
+See the main site of lcwgsus: https://github.com/Suuuuuuuus/lcwgsus.
 
 Bugs shall be submitted to the [issue tracker](https://github.com/Suuuuuuuus/lcwgsus/issues). Please kindly provide a REPRODUCIBLE example demonstrating the problem, otherwise debugging per se is foolhardy :)
