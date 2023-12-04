@@ -8,8 +8,6 @@ Documentation
 
 Online documentation is currently UNAVAILABLE, due to its lack of priority :) 
 
-See
-
 However, feel free to reach out, submit bugs, and/or make suggestions on improvement of this library. All are welcomed!
 
 Dependencies
