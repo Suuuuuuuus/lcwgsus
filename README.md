@@ -6,7 +6,7 @@ Lcwgsus is a Python package written to perform downstream low-coverage whole-gen
 Documentation
 -------------
 
-Online documentation is currently UNAVAILABLE, due to its lack priority :) 
+Online documentation is currently UNAVAILABLE, due to its lack of priority :) 
 
 See
 
@@ -18,6 +18,11 @@ Dependencies
 Lcwgsus supports Python 3.8+.
 
 Installation requires [numpy](https://numpy.org/), [pandas](https://pandas.pydata.org/), [matplotlib](https://matplotlib.org/), [seaborn](https://seaborn.pydata.org/), [statsmodels](https://statsmodels.org/), and [scipy](https://scipy.org/).
+
+Dependencies
+------------
+
+Lcwgsus is not a published work, so citing the GitHub repo suffices. Please refer to the `CITATION.cff` file.
 
 Development
 -----------
