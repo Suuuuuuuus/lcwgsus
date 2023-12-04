@@ -1,0 +1,26 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: lcwgsus
+message: >-
+  Lcwgsus hasn't yet been published, so citing the website
+  is enough.
+type: software
+authors:
+  - given-names: Sus
+    email: bjzzp01@163.com
+repository-code: 'https://github.com/Suuuuuuuus/lcwgsus'
+url: 'https://pypi.org/project/lcwgsus/'
+abstract: >-
+  A Python package written to perform downstream
+  low-coverage whole-genome sequencing (lcWGS) analysis
+keywords:
+  - low-coverage whole-genome sequencing
+  - vcf
+  - imputation
+  - allele frequency
+  - QUILT
+license: MIT
+version: 0.0.1
+date-released: '2023-12-04'

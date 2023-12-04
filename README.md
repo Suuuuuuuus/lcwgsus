@@ -1,7 +1,7 @@
 lcwgsus: processing low-coverage vcf files
 =======================================
 
-Lcwgsus is a Python package the Sus has written to perform downstream low-coverage whole-genome sequencing (lcWGS) analysis, hence more of personal use at all releases at the forseeable feature. This package will be properly editted and formatted if related works are about to be published.
+Lcwgsus is a Python package written to perform downstream low-coverage whole-genome sequencing (lcWGS) analysis, hence more of personal use at all releases at the forseeable feature. This package will be properly editted and formatted if related works are about to be published.
 
 Documentation
 -------------
