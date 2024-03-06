@@ -153,7 +153,7 @@ def plot_pc(df, num_PC=2, save_fig=False, save_name='graphs/PCA.png') -> None:
                                 "linewidth": 0,
                                 "shade": False
                             })
-        plot.suptitle('PCA Plot', y=1.02)
+        plot.fig.suptitle('PCA Plot', y=1.02)
     else:
         print("You should at least plot the first two PCs.")
     if save_fig:
