@@ -48,7 +48,6 @@ def plot_imputation_accuracy(r2, single_sample = True, aggregate = True, save_fi
                 plt.plot(r2[i].index, r2[i]['Imputation Accuracy'])
         plt.xlabel('gnomAD AF (%)')
         plt.ylabel('$r^2$')
-        plt.title(plot_title)
         plt.xscale('log')
     else:
         if aggregate:
