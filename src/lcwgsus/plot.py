@@ -25,7 +25,10 @@ pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
 
-__all__ = ["plot_afs", "plot_imputation_accuracy", "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info"]
+__all__ = [
+    "plot_afs", "plot_imputation_accuracy", "plot_sequencing_skew",
+    "plot_info_vs_af", "plot_r2_vs_info", "plot_pc"
+]
 
 def plot_afs(df1: pd.DataFrame, df2: pd.DataFrame, save_fig: bool = False, outdir: str = 'graphs/', save_name: str = 'af_vs_af.png') -> float:
     # df1 is the chip df with cols chr, pos, ref, alt and prop
@@ -98,10 +101,15 @@ def plot_info_vs_af(vcf, afs, MAF_ary = np.array([0, 0.0001, 0.0002, 0.0005, 0.0
     ax.set_xticklabels(MAF_ary[np.sort(df['classes'].unique()) - 1])
     if save_fig:
         plt.savefig(outdir + save_name, bbox_inches = "tight", dpi=300)
-def plot_r2_vs_info(df, save_fig = False, outdir = 'graphs/', save_name = 'r2_vs_info.png'):
+
+
+def plot_r2_vs_info(df,
+                    save_fig=False,
+                    outdir='graphs/',
+                    save_name='r2_vs_info.png'):
     # Input df has AF bins, r2, avg_info, and bin counts
     pivot = df.pivot('corr', 'INFO_SCORE', 'Bin Count')
-    plt.figure(figsize = (8,6))
+    plt.figure(figsize=(8, 6))
     plt.imshow(pivot, cmap='viridis', interpolation='nearest', origin='lower')
     plt.colorbar(label='Bin Count')
     y_ticks = sorted(df['corr'].unique().round(3))
@@ -109,7 +117,46 @@ def plot_r2_vs_info(df, save_fig = False, outdir = 'graphs/', save_name = 'r2_vs
     plt.xlabel('Average INFO')
     plt.ylabel('Average $r^2$')
     plt.title('Heatmap of correlation vs info_score with bin counts')
-    plt.xticks(np.arange(len(x_ticks)), x_ticks, rotation = 45)
+    plt.xticks(np.arange(len(x_ticks)), x_ticks, rotation=45)
     plt.yticks(np.arange(len(y_ticks)), y_ticks)
     if save_fig:
-        plt.savefig(outdir + save_name, bbox_inches = "tight", dpi=300)
+        plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
+
+def plot_pc(df, num_PC=2, save_fig=False, save_name='graphs/PCA.png') -> None:
+    # Input df has 'PC_1', 'PC_2', ... columns and an additional column called 'ethnic'
+    plt.figure(figsize=(10, 8))
+
+    if num_PC == 2:
+        labels = df['ethnic']
+        targets = labels.unique()
+        colors = plt.cm.rainbow(np.linspace(0, 1, len(targets)))
+        for target, color in zip(targets, colors):
+            indices_to_keep = labels == target
+            plt.scatter(
+                df.loc[indices_to_keep, 'PC_1'],
+                df.loc[indices_to_keep, 'PC_2'],
+                color=color,
+                label=target,
+                s=50,
+            )
+        plt.legend()
+        plt.title('PCA Plot')
+        plt.xlabel('PC 1')
+        plt.ylabel('PC 2')
+        plt.grid(True)
+    elif num_PC > 2:
+        plot = sns.pairplot(df[['PC_' + str(i)
+                                for i in range(1, num_PC + 1)] + ['ethnic']],
+                            hue="ethnic",
+                            diag_kind="kde",
+                            diag_kws={
+                                "linewidth": 0,
+                                "shade": False
+                            })
+        plot.suptitle('PCA Plot', y=1.02)
+    else:
+        print("You should at least plot the first two PCs.")
+    if save_fig:
+        plt.savefig(save_name, bbox_inches="tight", dpi=300)
+    plt.show()
+    return None
