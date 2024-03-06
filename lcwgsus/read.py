@@ -97,6 +97,17 @@ def read_r2(panels, samples, indir = '../imputation_accuracy/imputation_accuracy
     res = pd.concat(dfs).reset_index(drop = True)
     return res, bin_count
 
+def parse_vcf(file, sample = 'call', q = None,
+              info_cols = ['EAF', 'INFO_SCORE'], attribute = 'info', fmt = 'format', drop_attribute = True, drop_lst = ['id', 'qual', 'filter']):
+    df = read_vcf(file)
+    df = extract_info(df, info_cols = info_cols, attribute = attribute, drop_attribute = drop_attribute)
+    df = extract_format(df, sample, fmt = fmt)
+    df = drop_cols(df, drop_lst = drop_lst)
+    if q is None:
+        return df
+    else:
+        q.put(df)
+
 def multi_parse_vcf(chromosomes, files, parse = True, sample = 'call', combine = True,
                info_cols = ['EAF', 'INFO_SCORE'], attribute = 'info', fmt = 'format', drop_attribute = True, drop_lst = ['id', 'qual', 'filter']):
     manager = multiprocessing.Manager()

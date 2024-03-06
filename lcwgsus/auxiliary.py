@@ -25,7 +25,7 @@ pd.options.mode.chained_assignment = None
 
 __all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "convert_to_str", "file_to_list", "combine_df"]
 
-def get_mem() -> None: 
+def get_mem() -> None:
     ### Print current memory usage
     # Input: None
     # Output: None
@@ -33,7 +33,7 @@ def get_mem() -> None:
     current_memory_usage_mb = current_memory_usage / 1024
     print(f"Current memory usage: {current_memory_usage_mb:.2f} MB")
 
-def get_genotype(df：pd.DataFrame, colname: str = 'call') -> float:
+def get_genotype(df: pd.DataFrame, colname: str = 'call') -> float:
     ### Encode a column of genotypes to integers.
     # Input: df with cols "ref", "alt", and <colname>.
     # Output: a dataframe column stores int-value genotypes.
