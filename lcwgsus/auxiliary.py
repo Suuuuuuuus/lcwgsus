@@ -5,6 +5,7 @@ import csv
 import gzip
 import time
 import random
+import json
 import secrets
 import resource
 import itertools
@@ -23,9 +24,9 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "convert_to_str", "file_to_list", "combine_df"]
+__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "encode_hla", "convert_to_str", "file_to_list", "combine_df"]
 
-def get_mem() -> None: 
+def get_mem() -> None:
     ### Print current memory usage
     # Input: None
     # Output: None
@@ -67,8 +68,16 @@ def get_imputed_dosage(df: pd.DataFrame, colname: str = 'call') -> float:
     else:
         return s.split(':')[2]
 
+
+def encode_hla(s: str) -> int:
+    ### Convert HLA genotypes to diploid dosage
+    # Input: HLA df sample columns.
+    # Output: a dataframe column stores diploid dosages.
+    parts = s.split(':')[0].split('|')
+    return int(parts[0]) + int(parts[1])
+
 def convert_to_str(x: Union[float, int]) -> str:
-    ### Convert floats and integers to strings. 
+    ### Convert floats and integers to strings.
     # Input: a number.
     # Output: the number in type of str.
     if x == int(x):

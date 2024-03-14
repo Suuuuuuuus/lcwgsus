@@ -6,6 +6,7 @@ import gzip
 import time
 import random
 import secrets
+import json
 import resource
 import itertools
 import multiprocessing
@@ -24,8 +25,9 @@ from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
+from .read import *
 
-__all__ = ["aggregate_r2", "extract_info", "extract_format", "drop_cols", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs"]
+__all__ = ["aggregate_r2", "extract_info", "extract_format", "extract_hla_type", "drop_cols", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs"]
 
 def aggregate_r2(df):
     tmp = df.copy().groupby(['AF', 'panel'])['corr'].mean().reset_index()
@@ -77,7 +79,7 @@ def subtract_bed_by_chr(cov, region, q = None):
                     cov.iloc[tmp, 1] = end
                     cov.iloc[i:tmp, 3] = -9
                     i = tmp
-                else: 
+                else:
                     cov.iloc[i:tmp+1, 3] = -9
                     i = tmp
         elif start == cov.iloc[i,1]:
@@ -93,17 +95,17 @@ def subtract_bed_by_chr(cov, region, q = None):
                     cov.iloc[tmp, 1] = end
                     cov.iloc[i:tmp+1, 3] = -9
                     i = tmp
-                else: 
+                else:
                     cov.iloc[i:tmp, 3] = -9
                     i = tmp
-        else: 
+        else:
             idx = cov.index.max() + 1
             cov.loc[idx] = {'chr': chr, 'start': cov.iloc[i,1], 'end': start, 'cov': cov.iloc[i,3]}
             if end < cov.iloc[i, 2]:
                 cov.iloc[i, 1] = end
             elif end == cov.iloc[i, 2]:
                 cov.iloc[i, 3] = -9
-            else: 
+            else:
                 tmp = i
                 while end > cov.iloc[tmp,2]:
                     tmp += 1
@@ -111,7 +113,7 @@ def subtract_bed_by_chr(cov, region, q = None):
                     cov.iloc[tmp, 1] = end
                     cov.iloc[i:tmp, 3] = -9
                     i = tmp
-                else: 
+                else:
                     cov.iloc[i:tmp+1, 3] = -9
                     i = tmp
     res = cov[cov['cov'] >= 0].sort_values(by = cov.columns[:2].to_list()).reset_index(drop = True)
@@ -138,16 +140,61 @@ def multi_subtract_bed(chromosomes, covs, regions, combine = True):
     else:
         return res_lst
 
-def filter_afs(df1, df2, diff = 0.2, z_score = None):
+def filter_afs(df1, df2, diff=0.2, z_score=None):
     # df1 is the main vcf in which afs are to be filtered out
     # df2 is the ref panel afs
     # Either filter by z-score (suggested 2 sds so 1.96 or diff=0.2)
-    res = pd.merge(df1, df2, on = ['chr', 'pos', 'ref', 'alt'])
+    res = pd.merge(df1, df2, on=['chr', 'pos', 'ref', 'alt'])
     if z_score is not None:
         res = res[(res['prop_y'] != 0) & (res['prop_y'] != 1)]
-        res['z'] = (res['prop_x'] - res['prop_y'])/np.sqrt(res['prop_y']*(1-res['prop_y']))
+        res['z'] = (res['prop_x'] - res['prop_y']) / np.sqrt(
+            res['prop_y'] * (1 - res['prop_y']))
         res = res[abs(res['z']) <= z_score]
-        return res.drop(columns = ['prop_x', 'prop_y', 'z'])
+        return res.drop(columns=['prop_x', 'prop_y', 'z'])
     else:
         res = res[abs(res['prop_x'] - res['prop_y']) < diff]
-        return res.drop(columns = ['prop_y']).rename(columns = {'prop_x': 'prop'})
+        return res.drop(columns=['prop_y']).rename(columns={'prop_x': 'prop'})
+
+def extract_hla_type(input_vcf, csv_path, json_path):
+    vcf = read_vcf(input_vcf)
+    samples = list(vcf.columns[9:])
+
+    for i in samples:
+        vcf[i] = vcf[i].apply(encode_hla)
+
+    types = vcf['ID'].str.split('*').str.get(0).unique()
+    types.sort()
+    hla = pd.DataFrame({'Name': samples})
+    for i in types:
+        hla[i + '_1'] = 0
+        hla[i + '_2'] = 0
+    hla.set_index('Name', inplace=True)
+
+    num_type = len(types) * 2
+    hla_abnormal = {}
+    for sample in samples:
+        hla_type = []
+        for gene in types:
+            tmp_vcf = vcf[vcf['ID'].str.contains(gene)].reset_index().drop(
+                columns='index')
+            hla_subtype = []
+            for i in range(tmp_vcf.shape[0]):
+                if tmp_vcf.loc[i, sample] == 1:
+                    hla_subtype.append(tmp_vcf.iloc[i, 2])
+                elif tmp_vcf.loc[i, sample] == 2:
+                    hla_subtype.append(tmp_vcf.iloc[i, 2])
+                    hla_subtype.append(tmp_vcf.iloc[i, 2])
+                else:
+                    pass
+            if len(hla_subtype) < 2:
+                hla_subtype = hla_subtype + ['N/A'] * (2 - len(hla_subtype))
+            hla_type = hla_type + hla_subtype
+        if len(hla_type) == num_type:
+            hla.loc[sample, :] = hla_type
+        else:
+            hla_abnormal[sample] = hla_type
+
+    hla.to_csv(csv_path, header = True, index = True)
+    if hla_abnormal != {}:
+        with open(json_path, "w") as json_file:
+            json.dump(hla_abnormal, json_file)
