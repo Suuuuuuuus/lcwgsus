@@ -25,7 +25,7 @@ pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
 
-__all__ = ["read_metadata", 
+__all__ = ["read_metadata",
     "read_vcf", "parse_vcf", "multi_parse_vcf",
     "read_af", "multi_read_af",
     "read_r2"]
@@ -38,17 +38,38 @@ def read_metadata(file, filetype = 'gzip', comment = '#'):
         with open(file, 'r') as f:
             metadata = [l for l in f if l.startswith(comment)]
     return metadata
-    
-def read_vcf(file, sample = 'call', q = None): 
+
+
+def read_vcf(file, sample='call', q=None):
     colname = read_metadata(file)
     header = colname[-1].replace('\n', '').split('\t')
-    df = pd.read_csv(file, compression='gzip', comment='#', sep = '\t', header = None, names = header).rename(columns={'#CHROM': 'chr', 'POS': 'pos', 'REF': 'ref', 'ALT': 'alt'})
-    if df.dtypes[0] != int: # Continue for now, but need to change this later if we are not merely considering autosomes
-        df['chr'] = df['chr'].str.extract(r'(\d+)').astype(int)
+    df = pd.read_csv(file,
+                     compression='gzip',
+                     comment='#',
+                     sep='\t',
+                     header=None,
+                     names=header).rename(columns={
+                         '#CHROM': 'chr',
+                         'POS': 'pos',
+                         'REF': 'ref',
+                         'ALT': 'alt'
+                     })
+    if df.dtypes[
+            0] != int:  # Continue for now, but need to change this later if we are not merely considering autosomes
+        if df.iloc[0,
+                   0][:3] == 'chr':  # Check if the vcf comes with 'chr' prefix
+            df = df[df['chr'].isin(['chr' + str(i) for i in range(1, 23)])]
+            df['chr'] = df['chr'].str.extract(r'(\d+)').astype(int)
+        else:
+            df = df[df['chr'].isin([str(i) for i in range(1, 23)])]
+            df['chr'] = df['chr'].astype(int)
     if df.dtypes[1] != int:
         df['pos'] = df['pos'].astype(int)
-    if len(df.columns) == 10: 
-        df.columns = ['chr', 'pos', 'id', 'ref', 'alt', 'qual', 'filter', 'info', 'format', 'call']
+    if len(df.columns) == 10:
+        df.columns = [
+            'chr', 'pos', 'id', 'ref', 'alt', 'qual', 'filter', 'info',
+            'format', 'call'
+        ]
         if sample != 'call':
             df.columns[-1] = sample
     if q is None:
@@ -56,7 +77,7 @@ def read_vcf(file, sample = 'call', q = None):
     else:
         q.put(df)
 
-def parse_vcf(file, sample = 'call', q = None, 
+def parse_vcf(file, sample = 'call', q = None,
               info_cols = ['EAF', 'INFO_SCORE'], attribute = 'info', fmt = 'format', drop_attribute = True, drop_lst = ['id', 'qual', 'filter']):
     df = read_vcf(file)
     df = extract_info(df, info_cols = info_cols, attribute = attribute, drop_attribute = drop_attribute)
