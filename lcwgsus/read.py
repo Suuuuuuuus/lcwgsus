@@ -48,21 +48,19 @@ def read_vcf(file, sample='call', q=None):
                      comment='#',
                      sep='\t',
                      header=None,
-                     names=header).rename(columns={
+                     names=header,
+                     dtype={'#CHROM': str, 'POS': int}).rename(columns={
                          '#CHROM': 'chr',
                          'POS': 'pos',
                          'REF': 'ref',
                          'ALT': 'alt'
                      }).dropna()
-    if df.dtypes[0] != int:  # Continue for now, but need to change this later if we are not merely considering autosomes
-        if df.iloc[0,0][:3] == 'chr':  # Check if the vcf comes with 'chr' prefix
-            df = df[df['chr'].isin(['chr' + str(i) for i in range(1, 23)])]
-            df['chr'] = df['chr'].str.extract(r'(\d+)').astype(int)
-        else:
-            df = df[df['chr'].isin([str(i) for i in range(1, 23)])]
-            df['chr'] = df['chr'].astype(int)
-    if df.dtypes[1] != int:
-        df['pos'] = df['pos'].astype(int)
+    if df.iloc[0, 0][:3] == 'chr':  # Check if the vcf comes with 'chr' prefix
+        df = df[df['chr'].isin(['chr' + str(i) for i in range(1, 23)])]
+        df['chr'] = df['chr'].str.extract(r'(\d+)').astype(int)
+    else:
+        df = df[df['chr'].isin([str(i) for i in range(1, 23)])]
+        df['chr'] = df['chr'].astype(int)
     if len(df.columns) == 10:
         df.columns = [
             'chr', 'pos', 'id', 'ref', 'alt', 'qual', 'filter', 'info',
