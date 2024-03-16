@@ -53,11 +53,9 @@ def read_vcf(file, sample='call', q=None):
                          'POS': 'pos',
                          'REF': 'ref',
                          'ALT': 'alt'
-                     })
-    if df.dtypes[
-            0] != int:  # Continue for now, but need to change this later if we are not merely considering autosomes
-        if df.iloc[0,
-                   0][:3] == 'chr':  # Check if the vcf comes with 'chr' prefix
+                     }).dropna()
+    if df.dtypes[0] != int:  # Continue for now, but need to change this later if we are not merely considering autosomes
+        if df.iloc[0,0][:3] == 'chr':  # Check if the vcf comes with 'chr' prefix
             df = df[df['chr'].isin(['chr' + str(i) for i in range(1, 23)])]
             df['chr'] = df['chr'].str.extract(r'(\d+)').astype(int)
         else:
