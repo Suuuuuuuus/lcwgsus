@@ -26,8 +26,9 @@ pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
 from .read import *
+from .save import *
 
-__all__ = ["aggregate_r2", "extract_info", "extract_format", "extract_hla_type", "drop_cols", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs"]
+__all__ = ["aggregate_r2", "extract_info", "extract_format", "extract_hla_type", "convert_indel" , "drop_cols", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs"]
 
 def aggregate_r2(df):
     tmp = df.copy().groupby(['AF', 'panel'])['corr'].mean().reset_index()
@@ -56,6 +57,17 @@ def extract_format(df, sample, fmt = 'format'):
     return df.drop(columns = [fmt, sample])
 def drop_cols(df, drop_lst = ['id', 'qual', 'filter']):
     return df.drop(columns = drop_lst)
+# Currently the saved version is gzip rather than bgzip
+def convert_indel(vcf, save = False, prefix = 'chr', outdir = 'test.vcf.gz'):
+    metadata = read_metadata(vcf)
+    df = read_vcf(vcf)
+    indels = df[(df['ref'] == '-') | (df['alt'] == '-')]
+    indels = indels.apply(recode_indel, axis = 1)
+    snps = df[(df['ref'] != '-') & (df['alt'] != '-')]
+    df = pd.concat([snps, indels]).sort_values(by = ['chr', 'pos'], ascending = True)
+    if save:
+        save_vcf(df, metadata, prefix, save_name = outdir)
+    return df
 
 def subtract_bed_by_chr(cov, region, q = None):
     i = 0

@@ -24,7 +24,7 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "encode_hla", "convert_to_str", "file_to_list", "combine_df"]
+__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -67,7 +67,24 @@ def get_imputed_dosage(df: pd.DataFrame, colname: str = 'call') -> float:
         return np.nan
     else:
         return s.split(':')[2]
-
+    
+def recode_indel(r: pd.Series, info: str = 'INFO') -> pd.Series:
+    ### Read from flanking sequence and recode ref/alt to the real nucleotide rather than '-'
+    # Input: one row of df
+    # Output: recoded row
+    flank = r[info].split('FLANK=')[1]
+    nucleotide = flank.split('[')[0][-1]
+    
+    if r['ref'] == '-':
+        r['ref'] = nucleotide
+        r['alt'] = nucleotide + r['alt']
+    elif r['alt'] == '-':
+        r['ref'] = nucleotide + r['ref']
+        r['alt'] = nucleotide
+        r['pos'] = r['pos'] - 1
+    else:
+        r = r
+    return r
 
 def encode_hla(s: str) -> int:
     ### Convert HLA genotypes to diploid dosage
