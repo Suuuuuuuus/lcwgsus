@@ -24,7 +24,7 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df"]
+__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -120,3 +120,24 @@ def combine_df(lst: List[pd.DataFrame]) -> pd.DataFrame:
     for i in range(1, len(lst)):
         df = pd.concat([df, lst[i]])
     return df.sort_values(by = df.columns[:2].to_list()).reset_index(drop = True)
+
+def intersect_dfs(lst: List[pd.DataFrame], common_cols: List[str] = ['chr', 'pos', 'ref', 'alt']) -> List[pd.DataFrame]:
+    common_indices = lst[0].set_index(common_cols).index
+    for i in range(1, len(lst)):
+        common_indices = common_indices.intersection(lst[i].set_index(common_cols).index)
+    
+    for i in range(len(lst)):
+        lst[i] = lst[i].set_index(common_cols).loc[common_indices].reset_index()
+    return lst
+
+def find_matching_samples(lc_samples, chip_samples, rename_map):
+    lc_to_retain = []
+    for key, value in rename_map.items():
+        if value in chip_samples:
+            lc_to_retain.append(key)
+    return lc_to_retain
+
+def append_lst(tmp_lst, full_lst):
+    for i, l in zip(tmp_lst, full_lst):
+        l.append(i)
+    return full_lst

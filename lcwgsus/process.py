@@ -28,7 +28,7 @@ from .auxiliary import *
 from .read import *
 from .save import *
 
-__all__ = ["aggregate_r2", "extract_info", "extract_format", "extract_hla_type", "convert_indel" , "drop_cols", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs"]
+__all__ = ["aggregate_r2", "extract_info", "encode_genotype", "extract_DS", "extract_format", "extract_hla_type", "convert_indel" , "drop_cols", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs"]
 
 def aggregate_r2(df):
     tmp = df.copy().groupby(['AF', 'panel'])['corr'].mean().reset_index()
@@ -45,6 +45,28 @@ def extract_info(df, info_cols = ['EAF', 'INFO_SCORE'], attribute = 'info', drop
     if drop_attribute:
         df = df.drop(columns = [attribute])
     return df
+def encode_genotype(r: pd.Series, chip_prefix = 'GAM') -> float:
+    ### Encode a row of genotypes to integers.
+    samples = r.index[r.index.str.contains(chip_prefix)]
+    for i in samples:
+        if r[i] == '0|0' or r[i]  == '0/0':
+            r[i] = 0.
+        elif r[i]  == '1|0' or r[i]  == '1/0':
+            r[i] = 1.
+        elif r[i]  == '0|1' or r[i]  == '0/1':
+            r[i] = 1.
+        elif r[i]  == '1|1' or r[i]  == '1/1':
+            r[i] = 2.
+        else:
+            r[i] = np.nan
+    return r
+def extract_DS(r, lc_prefix = 'GM'):
+    samples = r.index[r.index.str.contains(lc_prefix)]
+    for i in samples:
+        r[i] = float(r[i].split(':')[-1]) # Now this assumes DS has to be the last INFO field, but this might not be true
+        if r[i] < 0 or r[i] > 2:
+            r[i] = np.nan
+    return r
 def extract_format(df, sample, fmt = 'format'):
     fields = df[fmt].values[0].split(':')
     try:
