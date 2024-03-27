@@ -25,7 +25,7 @@ pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
 
-__all__ = ["calculate_af", "calculate_ss_cumsum_coverage", "calculate_average_info_score", "calculate_imputation_accuracy", "calculate_corrcoef", "calculate_concordance", "calculate_imputation_accuracy_metrics", "average_metrics", "calculate_h_imputation_accuracy", "generate_h_impacc"]
+__all__ = ["calculate_af", "calculate_ss_cumsum_coverage", "calculate_average_info_score", "calculate_imputation_accuracy", "calculate_corrcoef", "calculate_concordance", "calculate_imputation_accuracy_metrics", "average_h_metrics", "calculate_h_imputation_accuracy", "generate_h_impacc", "calculate_v_imputation_accuracy", "average_v_metrics", "generate_v_impacc"]
 
 def calculate_af(df: pd.DataFrame, drop: bool = True) -> pd.DataFrame: # WARNING:This utility might be erroneous!
     # df should have columns chr, pos, ref, alt and genotypes
@@ -169,7 +169,7 @@ def calculate_h_imputation_accuracy(chip, lc, af,
         af.to_csv(outdir + save_name, sep = '\t', index = False, header = True)
     return af
 
-def average_metrics(df, cols = ['NRC', 'r2', 'ccd_homref', 'ccd_het', 'ccd_homalt'], placeholder = -9):
+def average_h_metrics(df, cols = ['NRC', 'r2', 'ccd_homref', 'ccd_het', 'ccd_homalt'], placeholder = -9):
     res_ary = []
     res_ary.append(int(df.shape[0]))
     
@@ -191,24 +191,107 @@ def average_metrics(df, cols = ['NRC', 'r2', 'ccd_homref', 'ccd_het', 'ccd_homal
 def generate_h_impacc(df, MAF_ary = np.array([0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.95, 1]),
                       colnames = ['n_variants', 'NRC', 'NRC_BC', 'NRC_AC', 
                                   'r2', 'r2_BC', 'r2_AC', 
-                                  'ccd_homref', 'ccd_BC', 'ccd_homref_AC', 
+                                  'ccd_homref', 'ccd_homref_BC', 'ccd_homref_AC', 
                                   'ccd_het', 'ccd_het_BC', 'ccd_het_AC',
                                   'ccd_homalt', 'ccd_homalt_BC', 'ccd_homalt_AC'],
                   save_impacc = False, outdir = None, save_name = None):
     impacc = pd.DataFrame({'AF': MAF_ary})
     
     stack_lst = [[] for _ in range(len(colnames))]
-
-    tmp = df[df['MAF'] == 0]
-    if tmp.shape[0] == 0:
-        metrics = [0] + [-9, 0, 0]*5
-    else:
-        metrics = average_metrics(tmp)
-    stack_lst = append_lst(metrics, stack_lst)
     
-    for i in range(np.size(MAF_ary) - 1):
-        tmp = df[(MAF_ary[i+1] >= df['MAF']) & (df['MAF'] > MAF_ary[i])]
-        metrics = average_metrics(tmp)
+    for i in range(np.size(MAF_ary)):
+        if i == 0:
+            tmp = df[df['MAF'] == 0]
+        else:
+            tmp = df[(MAF_ary[i] >= df['MAF']) & (df['MAF'] > MAF_ary[i - 1])]
+        metrics = average_h_metrics(tmp)
+        stack_lst = append_lst(metrics, stack_lst)
+    
+    for name, col in zip(colnames, stack_lst):
+        impacc[name] = col
+    
+    if save_impacc:
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+        impacc.to_csv(outdir + save_name, sep = '\t', index = False, header = True)
+    return impacc
+
+def calculate_v_imputation_accuracy(chip, lc, af, MAF_ary = np.array([0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.95, 1]),
+                                    impacc_colnames = ['sample', 'AF', 'n_variants', 'NRC', 'NRC_BC', 'NRC_AC', 
+                                  'r2', 'r2_BC', 'r2_AC', 
+                                  'ccd_homref', 'ccd_homref_BC', 'ccd_homref_AC', 
+                                  'ccd_het', 'ccd_het_BC', 'ccd_het_AC',
+                                  'ccd_homalt', 'ccd_homalt_BC', 'ccd_homalt_AC'], 
+                                    common_cols = ['chr', 'pos', 'ref', 'alt'], chip_sample_prefix = 'GAM', lc_sample_prefix = 'GM',
+                                   save_file = False, outdir = None, save_name = None):
+    stack_lst = [[] for _ in range(len(impacc_colnames))]
+    
+    chip_af = pd.merge(chip, af, on = common_cols)
+    lc_af = pd.merge(lc, af, on = common_cols)
+    
+    chip_samples = chip.columns[chip.columns.str.contains(chip_sample_prefix)]
+    lc_samples = lc.columns[lc.columns.str.contains(lc_sample_prefix)]
+    n_sample = len(chip_samples)
+    
+    for chip_sample, lc_sample in zip(chip_samples, lc_samples):
+        chip = chip_af[['MAF', chip_sample]]
+        lc = lc_af[['MAF', lc_sample]]
+
+        for i in range(np.size(MAF_ary)):
+            if i == 0:
+                tmp_chip = chip[chip_af['MAF'] == 0]
+                tmp_lc = lc_af[lc_af['MAF'] == 0]
+            else:
+                tmp_chip = chip[(MAF_ary[i] > chip['MAF']) & (chip['MAF'] > MAF_ary[i-1])]
+                tmp_lc = lc[(MAF_ary[i] > lc['MAF']) & (lc['MAF'] > MAF_ary[i-1])]
+            
+            r1 = np.array(tmp_chip[chip_sample].values).astype(float)
+            r2 = np.array(tmp_lc[lc_sample].values).astype(float)
+            tmp_metrics = calculate_imputation_accuracy_metrics(r1, r2)
+            metrics = [chip_sample, MAF_ary[i], tmp_chip.shape[0]]
+            metrics = fix_v_metrics(metrics, tmp_metrics)
+            stack_lst = append_lst(metrics, stack_lst)
+
+    res_df = pd.DataFrame(dict(zip(impacc_colnames, stack_lst)))
+    
+    if save_file:
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+        res_df.to_csv(outdir + save_name, sep = '\t', index = False, header = True)
+    return res_df
+
+def average_v_metrics(df, cols = ['NRC', 'r2', 'ccd_homref', 'ccd_het', 'ccd_homalt'], placeholder = -9):
+    res_ary = []
+    res_ary.append(df['n_variants'].values[0])
+    
+    for c in cols:
+        c_count = c + '_BC'
+        tmp = df[df[c] != placeholder][[c, c_count]]
+        num = tmp[c_count].sum()
+        n_variants = tmp[c_count].mean() if num != 0 else 0
+        if n_variants == 0:
+            res_ary.append(placeholder)
+        else:
+            avg = (tmp[c]*tmp[c_count]).sum()/num
+            res_ary.append(avg)
+        res_ary.append(n_variants)
+        res_ary.append(num)
+    return res_ary
+
+def generate_v_impacc(df, MAF_ary = np.array([0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.95, 1]),
+                      colnames = ['n_variants', 'NRC', 'NRC_BC', 'NRC_AC', 
+                                  'r2', 'r2_BC', 'r2_AC', 
+                                  'ccd_homref', 'ccd_homref_BC', 'ccd_homref_AC', 
+                                  'ccd_het', 'ccd_het_BC', 'ccd_het_AC',
+                                  'ccd_homalt', 'ccd_homalt_BC', 'ccd_homalt_AC'],
+                  save_impacc = False, outdir = None, save_name = None):
+    impacc = pd.DataFrame({'AF': MAF_ary})
+    
+    stack_lst = [[] for _ in range(len(colnames))]
+    
+    for i in range(np.size(MAF_ary)):
+        tmp = df[df['AF'] == MAF_ary[i]]
+        metrics = average_v_metrics(tmp)
         stack_lst = append_lst(metrics, stack_lst)
     
     for name, col in zip(colnames, stack_lst):

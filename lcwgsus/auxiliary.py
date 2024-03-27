@@ -24,7 +24,7 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs"]
+__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "fix_v_metrics"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -136,6 +136,13 @@ def find_matching_samples(lc_samples, chip_samples, rename_map):
         if value in chip_samples:
             lc_to_retain.append(key)
     return lc_to_retain
+
+def fix_v_metrics(res_ary, metrics):
+    for i in range(len(metrics)):
+        res_ary.append(metrics[i])
+        if i % 2 == 1:
+            res_ary.append(metrics[i])
+    return res_ary
 
 def append_lst(tmp_lst, full_lst):
     for i, l in zip(tmp_lst, full_lst):
