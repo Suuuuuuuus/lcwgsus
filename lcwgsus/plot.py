@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 import statsmodels.api as sm
 import scipy
@@ -24,9 +25,10 @@ from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
+from .calculate import *
 
 __all__ = [
-    "plot_afs", "plot_imputation_accuracy", "plot_sequencing_skew",
+    "plot_afs", "plot_imputation_accuracy", "plot_imputation_accuracy_deprecated", "plot_sequencing_skew",
     "plot_info_vs_af", "plot_r2_vs_info", "plot_pc"
 ]
 
@@ -41,7 +43,8 @@ def plot_afs(df1: pd.DataFrame, df2: pd.DataFrame, save_fig: bool = False, outdi
     if save_fig:
         plt.savefig(outdir + save_name, bbox_inches = "tight", dpi=300)
     return np.corrcoef(df['prop_x'], df['prop_y'])[0,1]
-def plot_imputation_accuracy(r2, single_sample = True, aggregate = True, save_fig = False, save_name = 'imputation_corr_vs_af.png', outdir = 'graphs/'):
+# Currently deprecated
+def plot_imputation_accuracy_deprecated(r2, single_sample = True, aggregate = True, save_fig = False, save_name = 'imputation_corr_vs_af.png', outdir = 'graphs/'):
     plt.figure(figsize = (10,6))
     if single_sample:
         if type(r2) == pd.DataFrame:
@@ -159,4 +162,52 @@ def plot_pc(df, num_PC=2, save_fig=False, save_name='graphs/PCA.png') -> None:
     if save_fig:
         plt.savefig(save_name, bbox_inches="tight", dpi=300)
     plt.show()
+    return None
+
+def plot_imputation_accuracy(df_lst, labels = None, title = '', marker_size = 100, cmap_str = 'GnBu', save_fig = False, outdir = None, save_name = None):
+    ceil = 0
+    floor = 100
+    for triplet in df_lst:
+        c0, c1, c2 = tuple(list(triplet.columns))
+        triplet[c1] = triplet[c1].replace(-9, 0)
+        magnitude_ceil = round_to_nearest_magnitude(triplet[c2].max())
+        magnitude_floor = round_to_nearest_magnitude(triplet[c2].min(), False)
+        if ceil < magnitude_ceil:
+            ceil = magnitude_ceil
+        if floor > magnitude_floor:
+            floor = magnitude_floor
+
+    plt.figure(figsize=(8, 6))
+    ax = plt.subplot(1, 1, 1)
+    plt.grid(False)
+
+    cmap = plt.get_cmap(cmap_str)
+    magnitude = ceil - floor
+    bounds = np.logspace(floor, ceil, magnitude+1)
+    norm = mcolors.BoundaryNorm(bounds, cmap.N)
+    fmt = lambda x, pos: '{:.0e}'.format(x)
+    
+    for i in range(len(df_lst)):
+        triplet = df_lst[i]
+        c0, c1, c2 = tuple(list(triplet.columns))
+        
+        label = c1 if labels is None else labels[i]
+
+        x = np.arange(triplet.shape[0])
+        afs = triplet[c0]
+        vals = triplet[c1]
+        color = triplet[c2]
+
+        plt.plot(x, vals, label = label)
+        plt.xticks(x, afs, rotation = 45)
+
+        im = ax.scatter(x, vals, c=color, edgecolor='black', cmap=cmap, norm=norm, s = marker_size)
+    plt.colorbar(im, boundaries=bounds, ticks = bounds, format=FuncFormatter(fmt), label='Allele Frequency Counts')
+
+    plt.xlabel('gnomAD allele frequencies')
+    plt.title(title)
+    plt.legend()
+    plt.ylabel('Aggregated imputation accuracy ($r^2$)')
+    ax = plt.gca()
+    ax.grid()
     return None

@@ -28,7 +28,7 @@ from .auxiliary import *
 from .read import *
 from .save import *
 
-__all__ = ["aggregate_r2", "extract_info", "encode_genotype", "extract_DS", "extract_format", "extract_hla_type", "convert_indel" , "drop_cols", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs"]
+__all__ = ["aggregate_r2", "extract_info", "encode_genotype", "extract_DS", "extract_format", "extract_hla_type", "convert_indel" , "drop_cols", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs", "imputation_calculation_preprocess"]
 
 def aggregate_r2(df):
     tmp = df.copy().groupby(['AF', 'panel'])['corr'].mean().reset_index()
@@ -232,3 +232,50 @@ def extract_hla_type(input_vcf, csv_path, json_path):
     if hla_abnormal != {}:
         with open(json_path, "w") as json_file:
             json.dump(hla_abnormal, json_file)
+            
+def imputation_calculation_preprocess(truth_vcf, imp_vcf, af_txt,
+                                      sample_linker = 'data/metadata/sample_linker.csv', 
+                                      MAF_ary = np.array([0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.95, 1]),
+                                     chromosome = None, mini = False,
+                                     common_cols = ['chr', 'pos', 'ref', 'alt'],
+                                     lc_sample_prefix = 'GM', chip_sample_prefix = 'GAM', seq_sample_prefix = 'IDT'):
+    
+# Truth_vcf should have GT rather than DS in its FORMAT field, whereas imp_vcf has to have DS
+    af = read_af(af_txt)
+    lc = read_vcf(imp_vcf).sort_values(by = ['chr', 'pos'])
+    chip = read_vcf(truth_vcf).sort_values(by = ['chr', 'pos'])
+
+    sample_linker = pd.read_table(sample_linker, sep = ',')
+    if not mini:
+        sample_linker = sample_linker[~sample_linker['Sample_Name'].str.contains('mini')]
+        lc_samples = lc.columns[lc.columns.str.contains(lc_sample_prefix) & ~lc.columns.str.contains('mini')]
+    else:
+        sample_linker = sample_linker[sample_linker['Sample_Name'].str.contains('mini')]
+        lc_samples = lc.columns[lc.columns.str.contains(lc_sample_prefix) & lc.columns.str.contains('mini')]
+    rename_map = dict(zip(sample_linker['Sample_Name'], sample_linker['Chip_Name']))
+    
+    if chromosome is not None:
+        lc = lc[lc['chr'] == int(chromosome)]
+        chip = chip[chip['chr'] == int(chromosome)]
+        af = af[af['chr'] == int(chromosome)]
+
+    lc = lc.drop(columns = ['ID', 'QUAL', 'FILTER', 'INFO', 'FORMAT'])
+    chip = chip.drop(columns = ['ID', 'QUAL', 'FILTER', 'INFO', 'FORMAT'])
+
+    res = intersect_dfs([chip, lc, af])
+    chip = res[0]
+    lc = res[1]
+    af = res[2]
+
+    chip_samples = chip.columns[chip.columns.str.contains(chip_sample_prefix)]
+    lc_to_retain = find_matching_samples(lc_samples, chip_samples, rename_map)
+    lc = lc[common_cols + lc_to_retain]
+
+    lc = lc.apply(extract_DS, axis = 1)
+    chip = chip.apply(encode_genotype, axis = 1)
+
+    chip_order = []
+    for i in lc_to_retain:
+        chip_order.append(rename_map[i])
+    chip = chip[common_cols + chip_order]
+    return chip, lc, af

@@ -25,7 +25,7 @@ pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
 
-__all__ = ["calculate_af", "calculate_ss_cumsum_coverage", "calculate_average_info_score", "calculate_imputation_accuracy", "calculate_corrcoef", "calculate_concordance", "calculate_imputation_accuracy_metrics", "average_h_metrics", "calculate_h_imputation_accuracy", "generate_h_impacc", "calculate_v_imputation_accuracy", "average_v_metrics", "generate_v_impacc"]
+__all__ = ["calculate_af", "calculate_ss_cumsum_coverage", "calculate_average_info_score", "calculate_imputation_accuracy", "calculate_corrcoef", "calculate_concordance", "calculate_imputation_accuracy_metrics", "average_h_metrics", "calculate_h_imputation_accuracy", "generate_h_impacc", "calculate_v_imputation_accuracy", "average_v_metrics", "generate_v_impacc", "calculate_weighted_average", "average_impacc_by_chr", "round_to_nearest_magnitude"]
 
 def calculate_af(df: pd.DataFrame, drop: bool = True) -> pd.DataFrame: # WARNING:This utility might be erroneous!
     # df should have columns chr, pos, ref, alt and genotypes
@@ -39,6 +39,15 @@ def calculate_af(df: pd.DataFrame, drop: bool = True) -> pd.DataFrame: # WARNING
         return df[['chr', 'pos', 'ref', 'alt', 'prop']]
     else:
         return df
+    
+def round_to_nearest_magnitude(number, ceil = True):
+    if number == 0:
+        return 0
+    if ceil:
+        magnitude = int(np.ceil(np.log10(abs(number))))
+    else:
+        magnitude = int(np.floor(np.log10(abs(number))))
+    return magnitude
 
 def calculate_corrcoef(r1, r2, square = True):
     if r1.size < 2 or len(np.unique(r1)) == 1 or len(np.unique(r2)) == 1:
@@ -301,4 +310,45 @@ def generate_v_impacc(df, MAF_ary = np.array([0, 0.0001, 0.0002, 0.0005, 0.001, 
         if not os.path.exists(outdir):
             os.makedirs(outdir)
         impacc.to_csv(outdir + save_name, sep = '\t', index = False, header = True)
+    return impacc
+
+def calculate_weighted_average(ary, weights):
+    ary = np.array(ary)
+    weights = np.array(weights)
+    if ary.size == 0 or weights.size == 0 or weights.sum() == 0:
+        return -9
+    else:
+        num = weights.sum()
+        avg = (ary*weights).sum()/num
+    return avg
+
+def average_impacc_by_chr(impacc_lst, 
+                          MAF_ary = np.array([0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.95, 1]),
+                         colnames = ['n_variants', 'NRC', 'NRC_BC', 'NRC_AC', 
+                                  'r2', 'r2_BC', 'r2_AC', 
+                                  'ccd_homref', 'ccd_homref_BC', 'ccd_homref_AC', 
+                                  'ccd_het', 'ccd_het_BC', 'ccd_het_AC',
+                                  'ccd_homalt', 'ccd_homalt_BC', 'ccd_homalt_AC']):
+    impacc = pd.DataFrame({'AF': MAF_ary})
+    for i in range(MAF_ary.size):
+        tmp_lst = [df[df['AF'] == MAF_ary[i]] for df in impacc_lst]
+        merge_df = pd.concat(tmp_lst)
+        metrics = [merge_df[colnames[0]].sum()]
+        for j in range(len(colnames)):
+            if j%3 == 1:
+                triplet = merge_df[colnames[j:j+3]]
+                triplet = triplet[triplet[colnames[j]] != -9]
+                if triplet.shape[0] == 0:
+                    metrics = metrics + [-9, 0, 0]
+                elif triplet.shape[0] == 1:
+                    metrics = metrics + list(triplet.iloc[0, :].values)
+                else:
+                    metrics = metrics + [calculate_weighted_average(triplet.iloc[:, 0].values, triplet.iloc[:, 2]), triplet.iloc[:, 1].sum(), triplet.iloc[:, 2].sum()]
+        if i == 0:
+            res_ary = metrics
+        else:
+            res_ary = np.vstack([res_ary, metrics])
+    res_ary = res_ary.T
+    for name, col in zip(colnames, res_ary):
+        impacc[name] = col
     return impacc
