@@ -24,7 +24,7 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "fix_v_metrics"]
+__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "fix_v_metrics",  "extract_info", "encode_genotype", "extract_DS", "extract_format", "drop_cols"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -148,3 +148,47 @@ def append_lst(tmp_lst, full_lst):
     for i, l in zip(tmp_lst, full_lst):
         l.append(i)
     return full_lst
+
+def extract_info(df, info_cols = ['EAF', 'INFO_SCORE'], attribute = 'info', drop_attribute = True):
+    for i in info_cols:
+        df[i] = df[attribute].str.extract( i + '=([^;]+)' ).astype(float)
+    if drop_attribute:
+        df = df.drop(columns = [attribute])
+    return df
+
+def encode_genotype(r: pd.Series, chip_prefix = 'GAM') -> float:
+    ### Encode a row of genotypes to integers.
+    samples = r.index[r.index.str.contains(chip_prefix)]
+    for i in samples:
+        if r[i] == '0|0' or r[i]  == '0/0':
+            r[i] = 0.
+        elif r[i]  == '1|0' or r[i]  == '1/0':
+            r[i] = 1.
+        elif r[i]  == '0|1' or r[i]  == '0/1':
+            r[i] = 1.
+        elif r[i]  == '1|1' or r[i]  == '1/1':
+            r[i] = 2.
+        else:
+            r[i] = np.nan
+    return r
+
+def extract_DS(r, lc_prefix = 'GM'):
+    samples = r.index[r.index.str.contains(lc_prefix)]
+    for i in samples:
+        r[i] = float(r[i].split(':')[-1]) # Now this assumes DS has to be the last INFO field, but this might not be true
+        if r[i] < 0 or r[i] > 2:
+            r[i] = np.nan
+    return r
+
+def extract_format(df, sample, fmt = 'format'):
+    fields = df[fmt].values[0].split(':')
+    try:
+        df[fields] = df[sample].str.split(':', expand=True)
+        df[df.columns[-1]] = df[df.columns[-1]].astype(float)
+        if len(fields) != len(df[sample].values[0].split(':')):
+            raise ValueError("Mismatching fields in FORMAT and Imputed results.")
+    except ValueError as e:
+        print(f"Error: {e}")
+    return df.drop(columns = [fmt, sample])
+def drop_cols(df, drop_lst = ['id', 'qual', 'filter']):
+    return df.drop(columns = drop_lst)

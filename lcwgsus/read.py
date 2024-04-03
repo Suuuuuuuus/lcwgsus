@@ -24,12 +24,8 @@ from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
-from .process import *
 
-__all__ = ["read_metadata",
-    "read_vcf", "parse_vcf", "multi_parse_vcf",
-    "read_af", "multi_read_af",
-    "read_r2"]
+__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af", "read_r2"]
 
 def read_metadata(file, filetype = 'gzip', comment = '#'):
     if filetype == 'gzip':

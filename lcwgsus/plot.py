@@ -73,6 +73,7 @@ def plot_imputation_accuracy_deprecated(r2, single_sample = True, aggregate = Tr
             plt.ylabel('gnomAD allele frequencies')
     if save_fig:
         plt.savefig(outdir + save_name, bbox_inches = "tight", dpi=300)
+    return None
 def plot_sequencing_skew(arys, avg_coverage, n_se = 1.96, code = None, num_coverage=5, save_fig = False, save_name = 'prop_genome_at_least_coverage.png', outdir = 'graphs/'):
     poisson_expectation = 1 - np.cumsum(poisson.pmf(np.arange(num_coverage), mu=avg_coverage, loc=0))
     se = np.sqrt(avg_coverage/len(arys))
@@ -91,6 +92,7 @@ def plot_sequencing_skew(arys, avg_coverage, n_se = 1.96, code = None, num_cover
     plt.title('Sequencing Skew')
     if save_fig:
         plt.savefig(outdir + save_name, bbox_inches = "tight", dpi=300)
+    return None
 def plot_info_vs_af(vcf, afs, MAF_ary = np.array([0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.95, 1]),
                    save_fig = False, outdir = 'graphs/', save_name = 'info_vs_af.png'):
     df = pd.merge(vcf[['chr', 'pos', 'ref', 'alt', 'info']], afs, on=['chr', 'pos', 'ref', 'alt'], how="left").dropna()
@@ -104,6 +106,7 @@ def plot_info_vs_af(vcf, afs, MAF_ary = np.array([0, 0.0001, 0.0002, 0.0005, 0.0
     ax.set_xticklabels(MAF_ary[np.sort(df['classes'].unique()) - 1])
     if save_fig:
         plt.savefig(outdir + save_name, bbox_inches = "tight", dpi=300)
+    return None
 
 
 def plot_r2_vs_info(df,
@@ -124,6 +127,7 @@ def plot_r2_vs_info(df,
     plt.yticks(np.arange(len(y_ticks)), y_ticks)
     if save_fig:
         plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
+    return None
 
 def plot_pc(df, num_PC=2, save_fig=False, save_name='graphs/PCA.png') -> None:
     # Input df has 'PC_1', 'PC_2', ... columns and an additional column called 'ethnic'

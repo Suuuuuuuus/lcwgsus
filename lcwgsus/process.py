@@ -25,10 +25,10 @@ from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
-from .read import *
 from .save import *
+from .read import *
 
-__all__ = ["aggregate_r2", "extract_info", "encode_genotype", "extract_DS", "extract_format", "extract_hla_type", "convert_indel" , "drop_cols", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs", "imputation_calculation_preprocess"]
+__all__ = ["aggregate_r2", "extract_hla_type", "convert_indel", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs", "imputation_calculation_preprocess"]
 
 def aggregate_r2(df):
     tmp = df.copy().groupby(['AF', 'panel'])['corr'].mean().reset_index()
@@ -39,46 +39,6 @@ def aggregate_r2(df):
         imp_res = imp_res.sort_values(by = 'sort', ascending = True).drop(columns = 'sort')
         res_ary.append(imp_res.reset_index(drop = True))
     return res_ary
-def extract_info(df, info_cols = ['EAF', 'INFO_SCORE'], attribute = 'info', drop_attribute = True):
-    for i in info_cols:
-        df[i] = df[attribute].str.extract( i + '=([^;]+)' ).astype(float)
-    if drop_attribute:
-        df = df.drop(columns = [attribute])
-    return df
-def encode_genotype(r: pd.Series, chip_prefix = 'GAM') -> float:
-    ### Encode a row of genotypes to integers.
-    samples = r.index[r.index.str.contains(chip_prefix)]
-    for i in samples:
-        if r[i] == '0|0' or r[i]  == '0/0':
-            r[i] = 0.
-        elif r[i]  == '1|0' or r[i]  == '1/0':
-            r[i] = 1.
-        elif r[i]  == '0|1' or r[i]  == '0/1':
-            r[i] = 1.
-        elif r[i]  == '1|1' or r[i]  == '1/1':
-            r[i] = 2.
-        else:
-            r[i] = np.nan
-    return r
-def extract_DS(r, lc_prefix = 'GM'):
-    samples = r.index[r.index.str.contains(lc_prefix)]
-    for i in samples:
-        r[i] = float(r[i].split(':')[-1]) # Now this assumes DS has to be the last INFO field, but this might not be true
-        if r[i] < 0 or r[i] > 2:
-            r[i] = np.nan
-    return r
-def extract_format(df, sample, fmt = 'format'):
-    fields = df[fmt].values[0].split(':')
-    try:
-        df[fields] = df[sample].str.split(':', expand=True)
-        df[df.columns[-1]] = df[df.columns[-1]].astype(float)
-        if len(fields) != len(df[sample].values[0].split(':')):
-            raise ValueError("Mismatching fields in FORMAT and Imputed results.")
-    except ValueError as e:
-        print(f"Error: {e}")
-    return df.drop(columns = [fmt, sample])
-def drop_cols(df, drop_lst = ['id', 'qual', 'filter']):
-    return df.drop(columns = drop_lst)
 # Currently the saved version is gzip rather than bgzip
 def convert_indel(vcf, save = False, prefix = 'chr', outdir = 'test.vcf.gz'):
     metadata = read_metadata(vcf)

@@ -25,7 +25,7 @@ pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
 
-__all__ = ["calculate_af", "calculate_ss_cumsum_coverage", "calculate_average_info_score", "calculate_imputation_accuracy", "calculate_corrcoef", "calculate_concordance", "calculate_imputation_accuracy_metrics", "average_h_metrics", "calculate_h_imputation_accuracy", "generate_h_impacc", "calculate_v_imputation_accuracy", "average_v_metrics", "generate_v_impacc", "calculate_weighted_average", "average_impacc_by_chr", "round_to_nearest_magnitude"]
+__all__ = ["calculate_af", "calculate_ss_cumsum_coverage", "calculate_average_info_score", "calculate_imputation_accuracy", "calculate_corrcoef", "calculate_concordance", "calculate_imputation_accuracy_metrics", "average_h_metrics", "calculate_h_imputation_accuracy", "generate_h_impacc", "calculate_v_imputation_accuracy", "average_v_metrics", "generate_v_impacc", "calculate_weighted_average", "average_impacc_by_chr", "round_to_nearest_magnitude", "calculate_imputation_summary_metrics"]
 
 def calculate_af(df: pd.DataFrame, drop: bool = True) -> pd.DataFrame: # WARNING:This utility might be erroneous!
     # df should have columns chr, pos, ref, alt and genotypes
@@ -294,6 +294,7 @@ def generate_v_impacc(df, MAF_ary = np.array([0, 0.0001, 0.0002, 0.0005, 0.001, 
                                   'ccd_het', 'ccd_het_BC', 'ccd_het_AC',
                                   'ccd_homalt', 'ccd_homalt_BC', 'ccd_homalt_AC'],
                   save_impacc = False, outdir = None, save_name = None):
+    # BC entries for the vertical calculation does not make sense, as each person can have the same genotypes at different variants, so it does not make sense to either calculate the sum nor the average.
     impacc = pd.DataFrame({'AF': MAF_ary})
     
     stack_lst = [[] for _ in range(len(colnames))]
@@ -352,3 +353,10 @@ def average_impacc_by_chr(impacc_lst,
     for name, col in zip(colnames, res_ary):
         impacc[name] = col
     return impacc
+
+def calculate_imputation_summary_metrics(df, threshold, to_average = ['NRC', 'r2', 'ccd_homref', 'ccd_het', 'ccd_homalt'], decimal = 3):
+    df = df[df['AF'] > threshold]
+    res_ary = []
+    for i in to_average:
+        res_ary.append(np.round(calculate_weighted_average(df[i], df[i+'_AC']), decimals = decimal))
+    return tuple(res_ary)
