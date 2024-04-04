@@ -214,4 +214,9 @@ def plot_imputation_accuracy(df_lst, labels = None, title = '', marker_size = 10
     plt.ylabel('Aggregated imputation accuracy ($r^2$)')
     ax = plt.gca()
     ax.grid()
+
+    if save_fig:
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+        plt.savefig(save_name, bbox_inches="tight", dpi=300)
     return None
