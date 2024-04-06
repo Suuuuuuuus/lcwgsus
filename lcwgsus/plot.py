@@ -190,11 +190,11 @@ def plot_imputation_accuracy(df_lst, labels = None, title = '', marker_size = 10
     bounds = np.logspace(floor, ceil, magnitude+1)
     norm = mcolors.BoundaryNorm(bounds, cmap.N)
     fmt = lambda x, pos: '{:.0e}'.format(x)
-    
+
     for i in range(len(df_lst)):
         triplet = df_lst[i]
         c0, c1, c2 = tuple(list(triplet.columns))
-        
+
         label = c1 if labels is None else labels[i]
 
         x = np.arange(triplet.shape[0])
@@ -218,5 +218,5 @@ def plot_imputation_accuracy(df_lst, labels = None, title = '', marker_size = 10
     if save_fig:
         if not os.path.exists(outdir):
             os.makedirs(outdir)
-        plt.savefig(save_name, bbox_inches="tight", dpi=300)
+        plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
     return None
