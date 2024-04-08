@@ -27,22 +27,39 @@ from .auxiliary import *
 
 __all__ = ["save_vcf"]
 
-def save_vcf(df, metadata, prefix = 'chr', save_name = 'test.vcf.gz'): # Only use this if no cols are removed from the original vcf
+
+def save_vcf(df,
+             metadata,
+             prefix='chr',
+             outdir=None,
+             save_name=None
+             ):  # Only use this if no cols are removed from the original vcf
     # df is the vcf_df to be saved
     # metadata is a list generated from read_metadata
-    if type(df.iloc[0,0] == int):
+    if type(df.iloc[0, 0] == int):
         df[df.columns[0]] = prefix + df[df.columns[0]].astype(str)
     random_str = secrets.token_hex(8) + '_'
-    file_path = random_str + 'test.vcf'
-    metadata_path = random_str + 'metadata.txt'
-    df.to_csv(file_path, index=False, sep = '\t', header = False)
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    file_path = outdir + random_str + 'test.vcf'
+    metadata_path = outdir + random_str + 'metadata.txt'
+
+    df.to_csv(file_path, index=False, sep='\t', header=False)
+
     with open(metadata_path, 'w') as metadata_file:
         metadata_file.write(''.join(metadata))
-    gzipped_file_path = save_name
+
+    gzipped_file_path = outdir + save_name
+
     with open(metadata_path, 'rb') as metadata_file:
         metadata_content = metadata_file.read()
-    with open(file_path, 'rb') as data_file, gzip.open(gzipped_file_path, 'wb') as gzipped_file:
+
+    with open(file_path, 'rb') as data_file, gzip.open(gzipped_file_path,
+                                                       'wb') as gzipped_file:
         gzipped_file.write(metadata_content)
         gzipped_file.writelines(data_file)
+
     os.remove(file_path)
     os.remove(metadata_path)
