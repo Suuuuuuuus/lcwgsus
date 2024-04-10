@@ -24,7 +24,7 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "fix_v_metrics",  "extract_info", "encode_genotype", "extract_DS", "extract_format", "drop_cols"]
+__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "fix_v_metrics",  "extract_info", "encode_genotype", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -67,14 +67,14 @@ def get_imputed_dosage(df: pd.DataFrame, colname: str = 'call') -> float:
         return np.nan
     else:
         return s.split(':')[2]
-    
+
 def recode_indel(r: pd.Series, info: str = 'INFO') -> pd.Series:
     ### Read from flanking sequence and recode ref/alt to the real nucleotide rather than '-'
     # Input: one row of df
     # Output: recoded row
     flank = r[info].split('FLANK=')[1]
     nucleotide = flank.split('[')[0][-1]
-    
+
     if r['ref'] == '-':
         r['ref'] = nucleotide
         r['alt'] = nucleotide + r['alt']
@@ -125,7 +125,7 @@ def intersect_dfs(lst: List[pd.DataFrame], common_cols: List[str] = ['chr', 'pos
     common_indices = lst[0].set_index(common_cols).index
     for i in range(1, len(lst)):
         common_indices = common_indices.intersection(lst[i].set_index(common_cols).index)
-    
+
     for i in range(len(lst)):
         lst[i] = lst[i].set_index(common_cols).loc[common_indices].reset_index()
     return lst
@@ -176,20 +176,31 @@ def extract_DS(r, lc_prefix = 'GM'):
     samples = r.index[r.index.str.contains(lc_prefix)]
     pos = r['FORMAT'].split(':').index('DS') # This checks which fields is DS, but might want to twist for TOPMed imputation
     for i in samples:
-        r[i] = float(r[i].split(':')[pos]) 
+        r[i] = float(r[i].split(':')[pos])
         if r[i] < 0 or r[i] > 2:
             r[i] = np.nan
     return r
 
-def extract_format(df, sample, fmt = 'format'):
+def extract_format(df, sample, fmt='format'):
     fields = df[fmt].values[0].split(':')
     try:
         df[fields] = df[sample].str.split(':', expand=True)
         df[df.columns[-1]] = df[df.columns[-1]].astype(float)
         if len(fields) != len(df[sample].values[0].split(':')):
-            raise ValueError("Mismatching fields in FORMAT and Imputed results.")
+            raise ValueError(
+                "Mismatching fields in FORMAT and Imputed results.")
     except ValueError as e:
         print(f"Error: {e}")
-    return df.drop(columns = [fmt, sample])
+    return df.drop(columns=[fmt, sample])
+
 def drop_cols(df, drop_lst = ['id', 'qual', 'filter']):
     return df.drop(columns = drop_lst)
+
+
+def convert_to_chip_format(r, lc_prefix = 'GM'):
+    ### Encode a row of imputed results to genotypes
+    r['FORMAT'] = 'GT'
+    samples = r.index[r.index.str.contains(lc_prefix)]
+    for i in samples:
+        r[i] = r[i][:3]
+    return r
