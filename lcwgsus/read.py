@@ -27,13 +27,18 @@ from .auxiliary import *
 
 __all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af", "read_r2"]
 
-def read_metadata(file, filetype = 'gzip', comment = '#'):
+def read_metadata(file, filetype = 'gzip', comment = '#', new_cols = None):
     if filetype == 'gzip':
         with io.TextIOWrapper(gzip.open(file,'r')) as f:
             metadata = [l for l in f if l.startswith(comment)]
     else:
         with open(file, 'r') as f:
             metadata = [l for l in f if l.startswith(comment)]
+    
+    if new_cols is not None:
+        tmp = metadata[-1].split('\t')[:9] + new_cols
+        metadata[-1] = '\t'.join(tmp) + '\n'
+    
     return metadata
 
 

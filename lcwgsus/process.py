@@ -208,6 +208,7 @@ def imputation_calculation_preprocess(
         save_vcfs=False,
         lc_vcf_outdir=None,
         hc_vcf_outdir=None,
+        af_outdir=None,
         lc_vcf_name=None,
         hc_vcf_name=None,
         af_name=None,
@@ -260,21 +261,27 @@ def imputation_calculation_preprocess(
         chip_order.append(rename_map[i])
     chip = chip[vcf_cols + chip_order]
 
-    lc = lc.apply(extract_DS, axis=1)
-    chip = chip.apply(encode_genotype, axis=1)
-
     if save_vcfs:
-        lc_metadata = read_metadata(imp_vcf)
-        hc_metadata = read_metadata(truth_vcf)
-        save_vcf(lc, lc_metadata, outdir=lc_vcf_outdir, save_name=lc_vcf_name)
-
+        lc_metadata = read_metadata(imp_vcf, new_cols = list(lc.columns[9:]))
+        hc_metadata = read_metadata(truth_vcf, new_cols = list(chip.columns[9:]))
+        
+        save_vcf(lc,
+                 lc_metadata,
+                 outdir=lc_vcf_outdir,
+                 save_name=lc_vcf_name)
+        
         save_vcf(chip,
                  hc_metadata,
                  outdir=hc_vcf_outdir,
                  save_name=hc_vcf_name)
+        
+        if not os.path.exists(af_outdir):
+            os.makedirs(af_outdir)
+        af.to_csv(af_outdir + af_name, sep = '\t', header = False, index = False)
 
-        af.to_csv(af_name, sep = '\t', header = False, index = False)
-
+    lc = lc.apply(extract_DS, axis=1)
+    chip = chip.apply(encode_genotype, axis=1)    
+        
     lc = lc.drop(columns=drop_cols)
     chip = chip.drop(columns=drop_cols)
 
