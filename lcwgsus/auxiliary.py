@@ -202,5 +202,8 @@ def convert_to_chip_format(r, lc_prefix = 'GM'):
     r['FORMAT'] = 'GT'
     samples = r.index[r.index.str.contains(lc_prefix)]
     for i in samples:
-        r[i] = r[i][:3]
+        if pd.isna(r[i]):
+            r[i] = './.'
+        else:
+            r[i] = r[i][:3]
     return r
