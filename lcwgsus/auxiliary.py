@@ -160,13 +160,13 @@ def encode_genotype(r: pd.Series, chip_prefix = 'GAM') -> float:
     ### Encode a row of genotypes to integers.
     samples = r.index[r.index.str.contains(chip_prefix)]
     for i in samples:
-        if r[i] == '0|0' or r[i]  == '0/0':
+        if r[i][:2] == '0|0' or r[i][:2] == '0/0':
             r[i] = 0.
-        elif r[i]  == '1|0' or r[i]  == '1/0':
+        elif r[i][:2] == '1|0' or r[i][:2] == '1/0':
             r[i] = 1.
-        elif r[i]  == '0|1' or r[i]  == '0/1':
+        elif r[i][:2] == '0|1' or r[i][:2] == '0/1':
             r[i] = 1.
-        elif r[i]  == '1|1' or r[i]  == '1/1':
+        elif r[i][:2] == '1|1' or r[i][:2] == '1/1':
             r[i] = 2.
         else:
             r[i] = np.nan
