@@ -25,7 +25,7 @@ pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
 
-__all__ = ["calculate_af", "calculate_ss_cumsum_coverage", "calculate_average_info_score", "calculate_imputation_accuracy", "calculate_corrcoef", "calculate_concordance", "calculate_imputation_accuracy_metrics", "average_h_metrics", "calculate_h_imputation_accuracy", "generate_h_impacc", "calculate_v_imputation_accuracy", "average_v_metrics", "generate_v_impacc", "calculate_weighted_average", "average_impacc_by_chr", "round_to_nearest_magnitude", "calculate_imputation_summary_metrics"]
+__all__ = ["calculate_af", "calculate_ss_cumsum_coverage", "calculate_average_info_score", "calculate_imputation_accuracy", "calculate_corrcoef", "calculate_concordance", "calculate_imputation_accuracy_metrics", "average_h_metrics", "calculate_h_imputation_accuracy", "generate_h_impacc", "calculate_v_imputation_accuracy", "average_v_metrics", "generate_v_impacc", "calculate_weighted_average", "average_impacc_by_chr", "round_to_nearest_magnitude", "calculate_imputation_summary_metrics", "calculate_imputation_sumstats"]
 
 def calculate_af(df: pd.DataFrame, drop: bool = True) -> pd.DataFrame: # WARNING:This utility might be erroneous!
     # df should have columns chr, pos, ref, alt and genotypes
@@ -360,3 +360,38 @@ def calculate_imputation_summary_metrics(df, threshold, to_average = ['NRC', 'r2
     for i in to_average:
         res_ary.append(np.round(calculate_weighted_average(df[i], df[i+'_AC']), decimals = decimal))
     return tuple(res_ary)
+
+def calculate_imputation_sumstats(imp_dir, thresholds = [0.01, 0.05], axis = 'v', subset = False, 
+                                  chromosomes = [str(i) for i in range(1,23)], 
+                                  case_controls = ['non-malaria_control', 'mild_malaria', 'severe_malaria'],
+                                  ethnicities = ['fula', 'jola', 'mandinka', 'wollof'], save_file = False, save_name = "summary_metrics.tsv"):
+    cols = ['Comparison', 'Subset', 'Threshold', 'NRC', 'r2', 'ccd_homref', 'ccd_het', 'ccd_homalt']
+    sumstats = pd.DataFrame(columns=cols)
+    file_lst = [imp_dir + "impacc/all_samples/by_sample/chr" + i + "." + axis + ".impacc.tsv" for i in chromosomes]
+    dfs = [pd.read_csv(i, sep = '\t') for i in file_lst]
+    df = average_impacc_by_chr(dfs)
+    analysis_name = imp_dir.split("/")[-2]
+    
+    for t in thresholds:
+        res = [analysis_name, 'all'] + [t] + list(calculate_imputation_summary_metrics(df, t))
+        sumstats.loc[len(sumstats)] = res
+    
+    if subset:
+        for c in case_controls:
+            file_lst = [imp_dir + "impacc/by_cc/by_sample/" + c + ".chr" + i + "." + axis + ".impacc.tsv" for i in chromosomes]
+            dfs = [pd.read_csv(i, sep = '\t') for i in file_lst]
+            df = average_impacc_by_chr(dfs)
+            for t in thresholds:
+                res = [analysis_name, c] + [t] + list(calculate_imputation_summary_metrics(df, t))
+                sumstats.loc[len(sumstats)] = res
+
+        for e in ethnicities:
+            file_lst = [imp_dir + "impacc/by_eth/by_sample/" + e + ".chr" + i + "." + axis + ".impacc.tsv" for i in chromosomes]
+            dfs = [pd.read_csv(i, sep = '\t') for i in file_lst]
+            df = average_impacc_by_chr(dfs)
+            for t in thresholds:
+                res = [analysis_name, e] + [t] + list(calculate_imputation_summary_metrics(df, t))
+                sumstats.loc[len(sumstats)] = res
+    if save_file:
+        sumstats.to_csv(imp_dir + save_name, index = False, header = True, sep = '\t')
+    return sumstats
