@@ -6,6 +6,7 @@ import gzip
 import time
 import random
 import secrets
+import subprocess
 import resource
 import itertools
 import multiprocessing
@@ -25,11 +26,12 @@ pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
 
-__all__ = ["save_vcf"]
+__all__ = ["save_vcf", "rezip_vcf"]
 
 
 def save_vcf(df,
              metadata,
+             rezip = True,
              prefix='chr',
              outdir=None,
              save_name=None
@@ -65,3 +67,24 @@ def save_vcf(df,
 
     os.remove(file_path)
     os.remove(metadata_path)
+
+    if rezip:
+        rezip_vcf(gzipped_file_path)
+
+def rezip_vcf(f, index = True):
+    vcf = f.replace('.gz', '')
+    
+    clean = 'rm -f ' + vcf
+    subprocess.run(clean, shell = True)
+    
+    decompress = 'gunzip ' + f
+    subprocess.run(decompress, shell = True)
+
+    recompress = 'bgzip ' + vcf
+    subprocess.run(recompress, shell = True)
+    
+    if index:
+        index = 'tabix -f -p vcf ' + f
+        subprocess.run(index, shell = True)
+
+    return None
