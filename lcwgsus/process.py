@@ -222,6 +222,13 @@ def imputation_calculation_preprocess(
     lc = read_vcf(imp_vcf).sort_values(by=['chr', 'pos'])
     chip = read_vcf(truth_vcf).sort_values(by=['chr', 'pos'])
 
+    print(chip.head(5))
+    print()
+    print(lc.head(5))
+    print()
+    print(af.head(5))
+    print('read')
+
     sample_linker = pd.read_table(sample_linker, sep=',')
     if not mini:
         sample_linker = sample_linker[~sample_linker['Sample_Name'].str.
@@ -261,6 +268,13 @@ def imputation_calculation_preprocess(
         chip_order.append(rename_map[i])
     chip = chip[vcf_cols + chip_order]
 
+    print(chip.head(5))
+    print()
+    print(lc.head(5))
+    print()
+    print(af.head(5))
+    print('process')
+
     if save_vcfs:
         lc_metadata = read_metadata(imp_vcf, new_cols = list(lc.columns[9:]))
         hc_metadata = read_metadata(truth_vcf, new_cols = list(chip.columns[9:]))
@@ -278,6 +292,13 @@ def imputation_calculation_preprocess(
         if not os.path.exists(af_outdir):
             os.makedirs(af_outdir)
         af.to_csv(af_outdir + af_name, sep = '\t', header = False, index = False)
+
+    print(chip.head(5))
+    print()
+    print(lc.head(5))
+    print()
+    print(af.head(5))
+    print('save')
 
     lc = lc.apply(extract_DS, axis=1)
     chip = chip.apply(encode_genotype, axis=1)    
