@@ -190,8 +190,8 @@ def extract_GP(r, lc_prefix = 'GM'):
         r[i] = r[i].split(':')[pos]
     return r
 
-def extract_LDS(r, lc_prefix = 'GM', convert_to_GP = True):
-    samples = r.index[r.index.str.contains(lc_prefix)]
+def extract_LDS(r, chip_prefix = 'GAM', convert_to_GP = True):
+    samples = r.index[r.index.str.contains(chip_prefix)]
     pos = r['FORMAT'].split(':').index('LDS') # This checks which fields is DS, but might want to twist for TOPMed imputation
 
     fmt = (lambda x: "{:.3f}".format(float(x)))
