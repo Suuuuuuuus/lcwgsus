@@ -222,13 +222,6 @@ def imputation_calculation_preprocess(
     lc = read_vcf(imp_vcf).sort_values(by=['chr', 'pos'])
     chip = read_vcf(truth_vcf).sort_values(by=['chr', 'pos'])
 
-    print(chip.head(5))
-    print()
-    print(lc.head(5))
-    print()
-    print(af.head(5))
-    print('read')
-
     sample_linker = pd.read_table(sample_linker, sep=',')
     if not mini:
         sample_linker = sample_linker[~sample_linker['Sample_Name'].str.
@@ -267,13 +260,6 @@ def imputation_calculation_preprocess(
     for i in lc_to_retain:
         chip_order.append(rename_map[i])
     chip = chip[vcf_cols + chip_order]
-
-    print(chip.head(5))
-    print()
-    print(lc.head(5))
-    print()
-    print(af.head(5))
-    print('process')
 
     if save_vcfs:
         lc_metadata = read_metadata(imp_vcf, new_cols = list(lc.columns[9:]))
