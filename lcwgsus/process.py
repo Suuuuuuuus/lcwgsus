@@ -279,13 +279,6 @@ def imputation_calculation_preprocess(
             os.makedirs(af_outdir)
         af.to_csv(af_outdir + af_name, sep = '\t', header = False, index = False)
 
-    print(chip.head(5))
-    print()
-    print(lc.head(5))
-    print()
-    print(af.head(5))
-    print('save')
-
     lc = lc.apply(extract_DS, axis=1)
     chip = chip.apply(encode_genotype, axis=1)    
         
