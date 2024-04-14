@@ -6,6 +6,7 @@ import gzip
 import time
 import random
 import secrets
+import subprocess
 import json
 import resource
 import itertools
@@ -28,7 +29,7 @@ from .auxiliary import *
 from .save import *
 from .read import *
 
-__all__ = ["aggregate_r2", "extract_hla_type", "convert_indel", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs", "imputation_calculation_preprocess"]
+__all__ = ["aggregate_r2", "extract_hla_type", "convert_indel", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs", "imputation_calculation_preprocess", "rezip_vcf"]
 
 def aggregate_r2(df):
     tmp = df.copy().groupby(['AF', 'panel'])['corr'].mean().reset_index()
@@ -286,3 +287,21 @@ def imputation_calculation_preprocess(
     chip = chip.drop(columns=drop_cols)
 
     return chip, lc, af
+
+def rezip_vcf(f, index = True):
+    vcf = f.replace('.gz', '')
+    
+    clean = 'rm -f ' + vcf
+    subprocess.run(clean, shell = True)
+    
+    decompress = 'gunzip ' + f
+    subprocess.run(decompress, shell = True)
+
+    recompress = 'bgzip ' + vcf
+    subprocess.run(recompress, shell = True)
+    
+    if index:
+        index = 'tabix -f -p vcf ' + f
+        subprocess.run(index, shell = True)
+
+    return None
