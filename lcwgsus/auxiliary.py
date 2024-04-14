@@ -202,7 +202,7 @@ def extract_LDS(r, chip_prefix = 'GAM', convert_to_GP = True):
             HD = [float(i) for i in LDS.split('|')]
             homref = fmt((1-HD[0])*(1-HD[1]))
             homalt = fmt(HD[0]*HD[1])
-            het = fmt(1 - homref - homalt)
+            het = fmt(1 - float(homref) - float(homalt))
             r[i] = homref + ',' + het + ',' + homalt
         else:
             r[i] = LDS
