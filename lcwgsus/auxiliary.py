@@ -24,7 +24,7 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "fix_v_metrics",  "extract_info", "encode_genotype", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format"]
+__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "fix_v_metrics",  "extract_info", "encode_genotype", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format", "extract_GP", "extract_LDS"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -175,10 +175,41 @@ def encode_genotype(r: pd.Series, chip_prefix = 'GAM') -> float:
 def extract_DS(r, lc_prefix = 'GM'):
     samples = r.index[r.index.str.contains(lc_prefix)]
     pos = r['FORMAT'].split(':').index('DS') # This checks which fields is DS, but might want to twist for TOPMed imputation
+    r['FORMAT'] = 'DS'
     for i in samples:
         r[i] = float(r[i].split(':')[pos])
         if r[i] < 0 or r[i] > 2:
             r[i] = np.nan
+    return r
+
+def extract_GP(r, lc_prefix = 'GM'):
+    samples = r.index[r.index.str.contains(lc_prefix)]
+    pos = r['FORMAT'].split(':').index('GP') # This checks which fields is DS, but might want to twist for TOPMed imputation
+    r['FORMAT'] = 'GP'
+    for i in samples:
+        r[i] = r[i].split(':')[pos]
+    return r
+
+def extract_LDS(r, lc_prefix = 'GM', convert_to_GP = True):
+    samples = r.index[r.index.str.contains(lc_prefix)]
+    pos = r['FORMAT'].split(':').index('LDS') # This checks which fields is DS, but might want to twist for TOPMed imputation
+
+    fmt = (lambda x: "{:.3f}".format(float(x)))
+
+    for i in samples:
+        LDS = r[i].split(':')[pos]
+        if convert_to_GP:
+            HD = [float(i) for i in LDS.split('|')]
+            homref = fmt((1-HD[0])*(1-HD[1]))
+            homalt = fmt(HD[0]*HD[1])
+            het = fmt(1 - homref - homalt)
+            r[i] = homref + ',' + het + ',' + homalt
+        else:
+            r[i] = LDS
+    if convert_to_GP:
+        r['FORMAT'] = 'GP'
+    else:
+        r['FORMAT'] = 'LDS'
     return r
 
 def extract_format(df, sample, fmt='format'):
