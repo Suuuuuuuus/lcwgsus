@@ -36,6 +36,8 @@ def save_vcf(df,
              ):  # Only use this if no cols are removed from the original vcf
     # df is the vcf_df to be saved
     # metadata is a list generated from read_metadata
+    df = df.copy()
+
     if type(df.iloc[0, 0] == int):
         df[df.columns[0]] = prefix + df[df.columns[0]].astype(str)
     random_str = secrets.token_hex(8) + '_'
