@@ -172,8 +172,11 @@ def encode_genotype(r: pd.Series, chip_prefix = 'GAM') -> float:
             r[i] = np.nan
     return r
 
-def extract_DS(r, lc_prefix = 'GM', chip_prefix = 'GAM'):
-    samples = r.index[r.index.str.contains(lc_prefix) | r.index.str.contains(chip_prefix)]
+def valid_sample(r):
+    return r.index[r.index.str.contains('GM') | r.index.str.contains('GAM') | r.index.str.contains('HV')]
+
+def extract_DS(r):
+    samples = valid_sample(r)
     pos = r['FORMAT'].split(':').index('DS') # This checks which fields is DS, but might want to twist for TOPMed imputation
     r['FORMAT'] = 'DS'
     for i in samples:
@@ -182,16 +185,16 @@ def extract_DS(r, lc_prefix = 'GM', chip_prefix = 'GAM'):
             r[i] = np.nan
     return r
 
-def extract_GP(r, lc_prefix = 'GM'):
-    samples = r.index[r.index.str.contains(lc_prefix)]
+def extract_GP(r):
+    samples = valid_sample(r)
     pos = r['FORMAT'].split(':').index('GP') # This checks which fields is DS, but might want to twist for TOPMed imputation
     r['FORMAT'] = 'GP'
     for i in samples:
         r[i] = r[i].split(':')[pos]
     return r
 
-def extract_LDS(r, chip_prefix = 'GAM', convert_to_GP = True):
-    samples = r.index[r.index.str.contains(chip_prefix)]
+def extract_LDS(r, convert_to_GP = True):
+    samples = valid_sample(r)
     pos = r['FORMAT'].split(':').index('LDS') # This checks which fields is DS, but might want to twist for TOPMed imputation
 
     fmt = (lambda x: "{:.3f}".format(float(x)))
