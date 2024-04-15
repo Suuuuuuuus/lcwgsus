@@ -204,6 +204,7 @@ def imputation_calculation_preprocess(
             0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05,
             0.1, 0.2, 0.5, 0.95, 1
         ]),
+        server=False,
         chromosome=None,
         mini=False,
         save_vcfs=False,
@@ -254,13 +255,18 @@ def imputation_calculation_preprocess(
     drop_cols = ['ID', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
 
     chip_samples = chip.columns[chip.columns.str.contains(chip_sample_prefix)]
-    lc_to_retain = find_matching_samples(lc_samples, chip_samples, rename_map)
-    lc = lc[vcf_cols + lc_to_retain]
 
-    chip_order = []
-    for i in lc_to_retain:
-        chip_order.append(rename_map[i])
-    chip = chip[vcf_cols + chip_order]
+    if not server:
+        lc_to_retain = find_matching_samples(lc_samples, chip_samples, rename_map)
+        lc = lc[vcf_cols + lc_to_retain]
+
+        chip_order = []
+        for i in lc_to_retain:
+            chip_order.append(rename_map[i])
+        chip = chip[vcf_cols + chip_order]
+    
+    else:
+        lc = lc[chip.columns]
 
     if save_vcfs:
         lc_metadata = read_metadata(imp_vcf, new_cols = list(lc.columns[9:]))
