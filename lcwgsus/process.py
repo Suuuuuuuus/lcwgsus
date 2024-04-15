@@ -204,7 +204,7 @@ def imputation_calculation_preprocess(
             0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05,
             0.1, 0.2, 0.5, 0.95, 1
         ]),
-        server=False,
+        from_server=False,
         chromosome=None,
         mini=False,
         save_vcfs=False,
@@ -256,7 +256,7 @@ def imputation_calculation_preprocess(
 
     chip_samples = chip.columns[chip.columns.str.contains(chip_sample_prefix)]
 
-    if not server:
+    if not from_server:
         lc_to_retain = find_matching_samples(lc_samples, chip_samples, rename_map)
         lc = lc[vcf_cols + lc_to_retain]
 
