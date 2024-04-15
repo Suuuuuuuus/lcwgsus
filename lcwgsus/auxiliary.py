@@ -24,7 +24,7 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "fix_v_metrics",  "extract_info", "encode_genotype", "valid_sample", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format", "extract_GP", "extract_LDS"]
+__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "fix_v_metrics",  "extract_info", "encode_genotype", "valid_sample", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format", "extract_GP", "extract_LDS", "reorder_cols"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -240,3 +240,8 @@ def convert_to_chip_format(r):
         else:
             r[i] = r[i][:3]
     return r
+
+def reorder_cols(df):
+    cols = list(df.columns)
+    cols.insert(2, cols.pop(4))
+    return df[cols]
