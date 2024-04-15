@@ -172,8 +172,8 @@ def encode_genotype(r: pd.Series, chip_prefix = 'GAM') -> float:
             r[i] = np.nan
     return r
 
-def extract_DS(r, lc_prefix = 'GM'):
-    samples = r.index[r.index.str.contains(lc_prefix)]
+def extract_DS(r, lc_prefix = 'GM', chip_prefix = 'GAM'):
+    samples = r.index[r.index.str.contains(lc_prefix) | r.index.str.contains(chip_prefix)]
     pos = r['FORMAT'].split(':').index('DS') # This checks which fields is DS, but might want to twist for TOPMed imputation
     r['FORMAT'] = 'DS'
     for i in samples:
