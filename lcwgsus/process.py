@@ -266,6 +266,7 @@ def imputation_calculation_preprocess(
         chip = chip[vcf_cols + chip_order]
     
     else:
+        chip = reorder_cols(chip)
         lc = lc[chip.columns]
 
     if save_vcfs:
