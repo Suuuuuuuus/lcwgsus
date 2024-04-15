@@ -239,7 +239,7 @@ def calculate_v_imputation_accuracy(chip, lc, af, MAF_ary = np.array([0, 0.0001,
     lc_af = pd.merge(lc, af, on = common_cols)
     
     chip_samples = chip.columns[chip.columns.str.contains(chip_sample_prefix)]
-    lc_samples = lc.columns[lc.columns.str.contains(lc_sample_prefix)]
+    lc_samples = lc.columns[lc.columns.str.contains(lc_sample_prefix) | lc.columns.str.contains(chip_sample_prefix) | lc.columns.str.contains('HV')]
     n_sample = len(chip_samples)
     
     for chip_sample, lc_sample in zip(chip_samples, lc_samples):
