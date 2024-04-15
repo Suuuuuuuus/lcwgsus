@@ -233,7 +233,7 @@ def drop_cols(df, drop_lst = ['id', 'qual', 'filter']):
 def convert_to_chip_format(r):
     ### Encode a row of imputed results to genotypes
     r['FORMAT'] = 'GT'
-    samples = valid_sample
+    samples = valid_sample(r)
     for i in samples:
         if type(r[i]) != str: # This check if this is nan, but pd.isna() is not working properly
             r[i] = './.'
