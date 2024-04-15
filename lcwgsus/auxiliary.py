@@ -230,11 +230,10 @@ def extract_format(df, sample, fmt='format'):
 def drop_cols(df, drop_lst = ['id', 'qual', 'filter']):
     return df.drop(columns = drop_lst)
 
-
-def convert_to_chip_format(r, lc_prefix = 'GM'):
+def convert_to_chip_format(r):
     ### Encode a row of imputed results to genotypes
     r['FORMAT'] = 'GT'
-    samples = r.index[r.index.str.contains(lc_prefix, na=False)] # Don't know why you need this, it's weird
+    samples = valid_sample
     for i in samples:
         if type(r[i]) != str: # This check if this is nan, but pd.isna() is not working properly
             r[i] = './.'
