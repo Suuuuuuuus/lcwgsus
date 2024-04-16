@@ -230,9 +230,9 @@ def plot_imputation_accuracy(df_lst, labels = None, title = '', marker_size = 10
 def plot_violin(df, x, y, hue = None, title = None, save_fig = False, outdir = None, save_name = None):
     plt.figure(figsize = (10,6))
     if hue is None:
-        sns.violinplot(data=df, x = x, y = y)
+        sns.violinplot(data=df, x = x, y = y, cut = 0)
     else:
-        sns.violinplot(data=df, x = x, y = y, hue = hue)
+        sns.violinplot(data=df, x = x, y = y, hue = hue, cut = 0)
     
     if title is not None:
         plt.title(title)
