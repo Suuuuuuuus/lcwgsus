@@ -28,9 +28,15 @@ from .auxiliary import *
 from .calculate import *
 
 __all__ = [
-    "plot_afs", "plot_imputation_accuracy", "plot_imputation_accuracy_deprecated", "plot_sequencing_skew",
+    "save_figure", "plot_afs", "plot_imputation_accuracy", "plot_imputation_accuracy_deprecated", "plot_sequencing_skew",
     "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin"
 ]
+
+def save_figure(save: bool, outdir: str, name: str) -> None:
+    if save:
+        check_outdir(outdir)
+        plt.savefig(outdir + name, bbox_inches="tight", dpi=300)
+    return None
 
 def plot_afs(df1: pd.DataFrame, df2: pd.DataFrame, save_fig: bool = False, outdir: str = 'graphs/', save_name: str = 'af_vs_af.png') -> float:
     # df1 is the chip df with cols chr, pos, ref, alt and prop
@@ -231,5 +237,5 @@ def plot_violin(df, x, y, hue = None, title = None, save_fig = False, outdir = N
     if title is not None:
         plt.title(title)
 
-    save_fig(save_fig, outdir, save_name)
+    save_figure(save_fig, outdir, save_name)
     return None

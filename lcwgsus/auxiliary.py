@@ -24,7 +24,7 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "check_outdir", "save_fig", "generate_rename_map", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "resolve_common_samples", "fix_v_metrics",  "extract_info", "encode_genotype", "valid_sample", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format", "extract_GP", "extract_LDS", "reorder_cols", "convert_to_violin", "combine_violins"]
+__all__ = ["get_mem", "check_outdir", "generate_rename_map", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "resolve_common_samples", "fix_v_metrics",  "extract_info", "encode_genotype", "valid_sample", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format", "extract_GP", "extract_LDS", "reorder_cols", "convert_to_violin", "combine_violins"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -37,12 +37,6 @@ def get_mem() -> None:
 def check_outdir(outdir: str) -> None:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    return None
-
-def save_fig(save: bool, outdir: str, name: str) -> None:
-    if save:
-        check_outdir(outdir)
-        plt.savefig(outdir + name, bbox_inches="tight", dpi=300)
     return None
 
 def get_genotype(df: pd.DataFrame, colname: str = 'call') -> float:
