@@ -8,6 +8,7 @@ import random
 import json
 import secrets
 import resource
+import subprocess
 import itertools
 import multiprocessing
 import pandas as pd
@@ -24,7 +25,7 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "check_outdir", "generate_rename_map", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "resolve_common_samples", "fix_v_metrics",  "extract_info", "encode_genotype", "valid_sample", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format", "extract_GP", "extract_LDS", "reorder_cols", "convert_to_violin", "combine_violins"]
+__all__ = ["get_mem", "check_outdir", "generate_rename_map", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "resolve_common_samples", "fix_v_metrics",  "extract_info", "encode_genotype", "valid_sample", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format", "extract_GP", "extract_LDS", "reorder_cols", "convert_to_violin", "combine_violins", "bcftools_get_samples"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -73,7 +74,7 @@ def get_imputed_dosage(df: pd.DataFrame, colname: str = 'call') -> float:
     else:
         return s.split(':')[2]
 
-def generate_rename_map(mini = False, sample_linker = 'data/metadata/sample_linker.csv', 
+def generate_rename_map(mini = False, sample_linker = 'data/metadata/sample_linker.csv',
                         lc_sample_prefix = 'GM', chip_sample_prefix = 'GAM'):
     sample_linker = pd.read_table(sample_linker, sep=',')
     if not mini:
@@ -84,7 +85,7 @@ def generate_rename_map(mini = False, sample_linker = 'data/metadata/sample_link
             sample_linker['Sample_Name'].str.contains('mini')]
     rename_map = dict(
         zip(sample_linker['Sample_Name'], sample_linker['Chip_Name']))
-    
+
     return rename_map
 
 def recode_indel(r: pd.Series, info: str = 'INFO') -> pd.Series:
@@ -172,14 +173,14 @@ def resolve_common_samples(df_lst, source_lst, rename_map, mini = False, vcf_col
         else:
             samples = df.columns[9:]
             sample_lst.append(samples)
-    
+
     sets = [set(arr) for arr in sample_lst]
     common_elements = sets[0]
     for s in sets[1:]:
         common_elements = common_elements.intersection(s)
     common_samples = list(common_elements)
     common_vcf_cols = vcf_cols + common_samples
-    
+
     for df in df_lst:
         df = df[common_vcf_cols]
     return df_lst
@@ -307,3 +308,8 @@ def combine_violins(df_lst, labels_lst):
         df['label'] = label
     merged = pd.concat(df_lst)
     return merged
+
+def bcftools_get_samples(vcf):
+    command = "bcftools query -l" + " " + vcf
+    name = subprocess.run(command, shell = True, capture_output = True, text = True).stdout[:-1].split('\n')
+    return name
