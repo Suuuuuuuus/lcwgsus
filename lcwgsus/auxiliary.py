@@ -150,12 +150,16 @@ def intersect_dfs(lst: List[pd.DataFrame], common_cols: List[str] = ['chr', 'pos
         lst[i] = lst[i].set_index(common_cols).loc[common_indices].reset_index()
     return lst
 
-def find_matching_samples(lc_samples, chip_samples, rename_map):
-    lc_to_retain = []
-    for key, value in rename_map.items():
-        if value in chip_samples:
-            lc_to_retain.append(key)
-    return lc_to_retain
+
+def find_matching_samples(chip_samples, rename_map, truth='chip'):
+    if truth == 'chip':
+        return chip_samples
+    else:
+        lc_to_retain = []
+        for key, value in rename_map.items():
+            if value in chip_samples:
+                lc_to_retain.append(key)
+        return lc_to_retain
 
 def resolve_common_samples(df_lst, source_lst, rename_map, mini = False, vcf_cols = [
     'chr', 'pos', 'ID', 'ref', 'alt', 'QUAL', 'FILTER', 'INFO', 'FORMAT'
