@@ -24,7 +24,7 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "fix_v_metrics",  "extract_info", "encode_genotype", "valid_sample", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format", "extract_GP", "extract_LDS", "reorder_cols"]
+__all__ = ["get_mem", "check_outdir", "save_fig", "generate_rename_map", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "resolve_common_samples", "fix_v_metrics",  "extract_info", "encode_genotype", "valid_sample", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format", "extract_GP", "extract_LDS", "reorder_cols", "convert_to_violin", "combine_violins"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -33,6 +33,17 @@ def get_mem() -> None:
     current_memory_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     current_memory_usage_mb = current_memory_usage / 1024
     print(f"Current memory usage: {current_memory_usage_mb:.2f} MB")
+
+def check_outdir(outdir: str) -> None:
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    return None
+
+def save_fig(save: bool, outdir: str, name: str) -> None:
+    if save:
+        check_outdir(outdir)
+        plt.savefig(outdir + name, bbox_inches="tight", dpi=300)
+    return None
 
 def get_genotype(df: pd.DataFrame, colname: str = 'call') -> float:
     ### Encode a column of genotypes to integers.
@@ -67,6 +78,20 @@ def get_imputed_dosage(df: pd.DataFrame, colname: str = 'call') -> float:
         return np.nan
     else:
         return s.split(':')[2]
+
+def generate_rename_map(mini = False, sample_linker = 'data/metadata/sample_linker.csv', 
+                        lc_sample_prefix = 'GM', chip_sample_prefix = 'GAM'):
+    sample_linker = pd.read_table(sample_linker, sep=',')
+    if not mini:
+        sample_linker = sample_linker[~sample_linker['Sample_Name'].str.
+                                      contains('mini')]
+    else:
+        sample_linker = sample_linker[
+            sample_linker['Sample_Name'].str.contains('mini')]
+    rename_map = dict(
+        zip(sample_linker['Sample_Name'], sample_linker['Chip_Name']))
+    
+    return rename_map
 
 def recode_indel(r: pd.Series, info: str = 'INFO') -> pd.Series:
     ### Read from flanking sequence and recode ref/alt to the real nucleotide rather than '-'
@@ -136,6 +161,34 @@ def find_matching_samples(lc_samples, chip_samples, rename_map):
         if value in chip_samples:
             lc_to_retain.append(key)
     return lc_to_retain
+
+def resolve_common_samples(df_lst, source_lst, rename_map, mini = False, vcf_cols = [
+    'chr', 'pos', 'ID', 'ref', 'alt', 'QUAL', 'FILTER', 'INFO', 'FORMAT'
+]):
+    # source_lst can only contains lc, chip and hc, indicating where this data is originally from
+    sample_lst = []
+    for i, df in enumerate(df_lst):
+        if source_lst[i] == 'lc':
+            if not mini:
+                df_lst[i] = df[df.columns[~df.columns.str.contains('mini')]]
+            samples = df_lst[i].columns[9:]
+            samples_in_gam = [rename_map[s] for s in samples]
+            df_lst[i].columns = vcf_cols + samples_in_gam
+            sample_lst.append(samples_in_gam)
+        else:
+            samples = df.columns[9:]
+            sample_lst.append(samples)
+    
+    sets = [set(arr) for arr in sample_lst]
+    common_elements = sets[0]
+    for s in sets[1:]:
+        common_elements = common_elements.intersection(s)
+    common_samples = list(common_elements)
+    common_vcf_cols = vcf_cols + common_samples
+    
+    for df in df_lst:
+        df = df[common_vcf_cols]
+    return df_lst
 
 def fix_v_metrics(res_ary, metrics):
     for i in range(len(metrics)):
@@ -245,3 +298,18 @@ def reorder_cols(df):
     cols = list(df.columns)
     cols.insert(2, cols.pop(4))
     return df[cols]
+
+def convert_to_violin(df):
+    df = df.apply(lambda x: x.str.split(',').explode()).reset_index(drop = True)
+    gp = df.stack().reset_index(drop=True)
+    gt = pd.Series(['0/0'] * len(df.columns) + ['0/1'] * len(df.columns) + ['1/1'] * len(df.columns))
+    df = pd.concat([gp,gt], ignore_index = True, axis = 1)
+    df.columns = ['GP', 'GT']
+    df['GP'] = df['GP'].astype(float)
+    return df
+
+def combine_violins(df_lst, labels_lst):
+    for df, label in zip(df_lst, labels_lst):
+        df['label'] = label
+    merged = pd.concat(df_lst)
+    return merged

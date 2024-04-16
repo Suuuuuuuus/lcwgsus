@@ -29,7 +29,7 @@ from .calculate import *
 
 __all__ = [
     "plot_afs", "plot_imputation_accuracy", "plot_imputation_accuracy_deprecated", "plot_sequencing_skew",
-    "plot_info_vs_af", "plot_r2_vs_info", "plot_pc"
+    "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin"
 ]
 
 def plot_afs(df1: pd.DataFrame, df2: pd.DataFrame, save_fig: bool = False, outdir: str = 'graphs/', save_name: str = 'af_vs_af.png') -> float:
@@ -219,4 +219,17 @@ def plot_imputation_accuracy(df_lst, labels = None, title = '', marker_size = 10
         if not os.path.exists(outdir):
             os.makedirs(outdir)
         plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
+    return None
+
+def plot_violin(df, x, y, hue = None, title = None, save_fig = False, outdir = None, save_name = None):
+    plt.figure(figsize = (10,6))
+    if hue is None:
+        sns.violinplot(data=df, x = x, y = y)
+    else:
+        sns.violinplot(data=df, x = x, y = y, hue = hue)
+    
+    if title is not None:
+        plt.title(title)
+
+    save_fig(save_fig, outdir, save_name)
     return None
