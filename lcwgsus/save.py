@@ -26,7 +26,7 @@ pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
 
-__all__ = ["save_vcf", "rezip_vcf"]
+__all__ = ["save_vcf", "rezip_vcf", "save_lst"]
 
 
 def save_vcf(df,
@@ -71,20 +71,27 @@ def save_vcf(df,
     if rezip:
         rezip_vcf(gzipped_file_path)
 
-def rezip_vcf(f, index = True):
+
+def rezip_vcf(f, index=True):
     vcf = f.replace('.gz', '')
-    
+
     clean = 'rm -f ' + vcf
-    subprocess.run(clean, shell = True)
-    
+    subprocess.run(clean, shell=True)
+
     decompress = 'gunzip ' + f
-    subprocess.run(decompress, shell = True)
+    subprocess.run(decompress, shell=True)
 
     recompress = 'bgzip ' + vcf
-    subprocess.run(recompress, shell = True)
-    
+    subprocess.run(recompress, shell=True)
+
     if index:
         index = 'tabix -f -p vcf ' + f
-        subprocess.run(index, shell = True)
+        subprocess.run(index, shell=True)
 
+    return None
+
+def save_lst(file, lst):
+    with open(file, 'w') as file:
+        for item in lst:
+            file.write("%s\n" % item)
     return None
