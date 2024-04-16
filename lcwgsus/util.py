@@ -60,5 +60,5 @@ def visualise_single_variant(c, pos, vcf_lst, source_lst, labels_lst, vcf_cols =
 
     res = combine_violins(df_ary, labels_lst)
 
-    plot_violin(res, x = 'GT', y = 'GP', hue = 'labels', title = site, save_fig = save_fig, outdir = outdir, save_name = save_name)
+    plot_violin(res, x = 'GT', y = 'GP', hue = 'label', title = site, save_fig = save_fig, outdir = outdir, save_name = save_name)
     return None
