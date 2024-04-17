@@ -249,7 +249,8 @@ def imputation_calculation_preprocess(
     af = res[2]
     
     chip = reorder_cols(chip)
-    lc = lc[chip.columns]
+    lc.columns = chip.columns
+    # lc = lc[chip.columns]
     
 
     # vcf_cols = [
