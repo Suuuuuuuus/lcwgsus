@@ -247,27 +247,31 @@ def imputation_calculation_preprocess(
     chip = res[0]
     lc = res[1]
     af = res[2]
+    
+    chip = reorder_cols(chip)
+    lc = lc[chip.columns]
+    
 
-    vcf_cols = [
-        'chr', 'pos', 'ID', 'ref', 'alt', 'QUAL', 'FILTER', 'INFO', 'FORMAT'
-    ]
+    # vcf_cols = [
+    #     'chr', 'pos', 'ID', 'ref', 'alt', 'QUAL', 'FILTER', 'INFO', 'FORMAT'
+    # ]
 
     drop_cols = ['ID', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
 
-    chip_samples = chip.columns[chip.columns.str.contains(chip_sample_prefix)]
+    # chip_samples = chip.columns[chip.columns.str.contains(chip_sample_prefix)]
 
-    if not from_server:
-        lc_to_retain = find_matching_samples(lc_samples, chip_samples, rename_map)
-        lc = lc[vcf_cols + lc_to_retain]
+    # if not from_server:
+    #     lc_to_retain = find_matching_samples(lc_samples, chip_samples, rename_map)
+    #     lc = lc[vcf_cols + lc_to_retain]
 
-        chip_order = []
-        for i in lc_to_retain:
-            chip_order.append(rename_map[i])
-        chip = chip[vcf_cols + chip_order]
+    #     # chip_order = []
+    #     # for i in lc_to_retain:
+    #     #     chip_order.append(rename_map[i])
+    #     # chip = chip[vcf_cols + chip_order]
     
-    else:
-        chip = reorder_cols(chip)
-        lc = lc[chip.columns]
+    # else:
+    #     chip = reorder_cols(chip)
+        # lc = lc[chip.columns]
 
     if save_vcfs:
         lc_metadata = read_metadata(imp_vcf, new_cols = list(lc.columns[9:]))
