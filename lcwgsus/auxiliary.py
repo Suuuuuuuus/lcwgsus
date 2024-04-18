@@ -242,7 +242,7 @@ def extract_GT(r):
     pos = r['FORMAT'].split(':').index('GT') # This checks which fields is DS, but might want to twist for TOPMed imputation
     r['FORMAT'] = 'GT'
     for i in samples:
-        r[i] = float(r[i].split(':')[pos])
+        r[i] = r[i].split(':')[pos]
     return r
 
 def extract_DS(r):
