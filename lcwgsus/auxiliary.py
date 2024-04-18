@@ -185,8 +185,8 @@ def resolve_common_samples(df_lst, source_lst, rename_map, mini = False, vcf_col
     common_samples = list(common_elements)
     common_vcf_cols = vcf_cols + common_samples
 
-    for df in df_lst:
-        df = df[common_vcf_cols]
+    for i in range(len(df_lst)):
+        df_lst[i] = df_lst[i][common_vcf_cols]
     return df_lst
 
 def fix_v_metrics(res_ary, metrics):
