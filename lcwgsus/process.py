@@ -224,20 +224,6 @@ def imputation_calculation_preprocess(
     lc = read_vcf(imp_vcf).sort_values(by=['chr', 'pos'])
     chip = read_vcf(truth_vcf).sort_values(by=['chr', 'pos'])
 
-    sample_linker = pd.read_table(sample_linker, sep=',')
-    if not mini:
-        sample_linker = sample_linker[~sample_linker['Sample_Name'].str.
-                                      contains('mini')]
-        lc_samples = lc.columns[lc.columns.str.contains(lc_sample_prefix)
-                                & ~lc.columns.str.contains('mini')]
-    else:
-        sample_linker = sample_linker[
-            sample_linker['Sample_Name'].str.contains('mini')]
-        lc_samples = lc.columns[lc.columns.str.contains(lc_sample_prefix)
-                                & lc.columns.str.contains('mini')]
-    rename_map = dict(
-        zip(sample_linker['Sample_Name'], sample_linker['Chip_Name']))
-
     if chromosome is not None:
         lc = lc[lc['chr'] == int(chromosome)]
         chip = chip[chip['chr'] == int(chromosome)]
@@ -249,30 +235,10 @@ def imputation_calculation_preprocess(
     af = res[2]
     
     chip = reorder_cols(chip)
+    lc = reorder_cols(lc)
     lc.columns = chip.columns
-    # lc = lc[chip.columns]
-    
-
-    # vcf_cols = [
-    #     'chr', 'pos', 'ID', 'ref', 'alt', 'QUAL', 'FILTER', 'INFO', 'FORMAT'
-    # ]
 
     drop_cols = ['ID', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
-
-    # chip_samples = chip.columns[chip.columns.str.contains(chip_sample_prefix)]
-
-    # if not from_server:
-    #     lc_to_retain = find_matching_samples(lc_samples, chip_samples, rename_map)
-    #     lc = lc[vcf_cols + lc_to_retain]
-
-    #     # chip_order = []
-    #     # for i in lc_to_retain:
-    #     #     chip_order.append(rename_map[i])
-    #     # chip = chip[vcf_cols + chip_order]
-    
-    # else:
-    #     chip = reorder_cols(chip)
-        # lc = lc[chip.columns]
 
     if save_vcfs:
         lc_metadata = read_metadata(imp_vcf, new_cols = list(lc.columns[9:]))
