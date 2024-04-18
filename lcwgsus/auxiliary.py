@@ -33,7 +33,7 @@ __all__ = ["get_mem", "check_outdir",
            "intersect_dfs", "resolve_common_samples", "fix_v_metrics",  
            "extract_info", "encode_genotype", "valid_sample", 
            "extract_DS", "extract_format", "drop_cols", 
-           "convert_to_chip_format", "extract_GP", "retain_likely_GP", 
+           "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP", 
            "extract_LDS", "extract_LDS_to_DS", "reorder_cols", 
            "convert_to_violin", "combine_violins", "bcftools_get_samples"]
 
@@ -237,6 +237,14 @@ def encode_genotype(r: pd.Series, chip_prefix = 'GAM') -> float:
 def valid_sample(r):
     return r.index[r.index.str.contains('GM') | r.index.str.contains('GAM') | r.index.str.contains('HV')]
 
+def extract_GT(r):
+    samples = valid_sample(r)
+    pos = r['FORMAT'].split(':').index('GT') # This checks which fields is DS, but might want to twist for TOPMed imputation
+    r['FORMAT'] = 'GT'
+    for i in samples:
+        r[i] = float(r[i].split(':')[pos])
+    return r
+
 def extract_DS(r):
     samples = valid_sample(r)
     pos = r['FORMAT'].split(':').index('DS') # This checks which fields is DS, but might want to twist for TOPMed imputation
@@ -327,7 +335,7 @@ def reorder_cols(df):
     return df[cols]
 
 def convert_to_violin(df):
-    df = df.apply(lambda x: x.str.split(',').explode()).reset_index(drop = True)
+    # df = df.apply(lambda x: x.str.split(',').explode()).reset_index(drop = True)
     gp = df.stack().reset_index(drop=True)
     gt = pd.Series(['0/0'] * len(df.columns) + ['0/1'] * len(df.columns) + ['1/1'] * len(df.columns))
     df = pd.concat([gp,gt], ignore_index = True, axis = 1)
