@@ -25,16 +25,16 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "check_outdir", 
-           "generate_rename_map", "get_genotype", 
-           "get_imputed_dosage", "recode_indel", 
-           "encode_hla", "convert_to_str", "file_to_list", 
-           "combine_df", "find_matching_samples", "append_lst", 
-           "intersect_dfs", "resolve_common_samples", "fix_v_metrics",  
-           "extract_info", "encode_genotype", "valid_sample", 
-           "extract_DS", "extract_format", "drop_cols", 
-           "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP", 
-           "extract_LDS", "extract_LDS_to_DS", "reorder_cols", 
+__all__ = ["get_mem", "check_outdir",
+           "generate_rename_map", "get_genotype",
+           "get_imputed_dosage", "recode_indel",
+           "encode_hla", "convert_to_str", "file_to_list",
+           "combine_df", "find_matching_samples", "append_lst",
+           "intersect_dfs", "resolve_common_samples", "fix_v_metrics",
+           "extract_info", "encode_genotype", "valid_sample",
+           "extract_DS", "extract_format", "drop_cols",
+           "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP",
+           "extract_LDS", "extract_LDS_to_DS", "reorder_cols",
            "convert_to_violin", "combine_violins", "bcftools_get_samples"]
 
 def get_mem() -> None:
@@ -160,14 +160,16 @@ def intersect_dfs(lst: List[pd.DataFrame], common_cols: List[str] = ['chr', 'pos
         lst[i] = lst[i].set_index(common_cols).loc[common_indices].reset_index()
     return lst
 
-def find_matching_samples(chip_samples, rename_map, lc = 'chip'):
+
+def find_matching_samples(chip_samples, rename_map, lc='chip'):
     if lc == 'chip':
         return chip_samples
     else:
         lc_to_retain = []
-        for key, value in rename_map.items():
-            if value in chip_samples:
-                lc_to_retain.append(key)
+        val_to_key = {value: key for key, value in rename_map.items()}
+        for s in chip_samples:
+            if s in val_to_key:
+                lc_to_retain.append(val_to_key[s])
         return lc_to_retain
 
 def resolve_common_samples(df_lst, source_lst, rename_map, mini = False, vcf_cols = [
