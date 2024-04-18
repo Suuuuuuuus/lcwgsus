@@ -25,7 +25,7 @@ from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
-__all__ = ["get_mem", "check_outdir", "generate_rename_map", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "resolve_common_samples", "fix_v_metrics",  "extract_info", "encode_genotype", "valid_sample", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format", "extract_GP", "extract_LDS", "reorder_cols", "convert_to_violin", "combine_violins", "bcftools_get_samples"]
+__all__ = ["get_mem", "check_outdir", "generate_rename_map", "get_genotype", "get_imputed_dosage", "recode_indel", "encode_hla", "convert_to_str", "file_to_list", "combine_df", "find_matching_samples", "append_lst", "intersect_dfs", "resolve_common_samples", "fix_v_metrics",  "extract_info", "encode_genotype", "valid_sample", "extract_DS", "extract_format", "drop_cols", "convert_to_chip_format", "extract_GP", "retain_likely_GP", "extract_LDS", "reorder_cols", "convert_to_violin", "combine_violins", "bcftools_get_samples"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -163,7 +163,8 @@ def find_matching_samples(chip_samples, rename_map, lc = 'chip'):
 def resolve_common_samples(df_lst, source_lst, rename_map, mini = False, vcf_cols = [
     'chr', 'pos', 'ID', 'ref', 'alt', 'QUAL', 'FILTER', 'INFO', 'FORMAT'
 ]):
-    # source_lst can only contains lc, chip and hc, indicating where this data is originally from
+    # This utility takes a list of vcfs as input, and intersect them to get a common subset of samples, and return the list. It could resolve different types of sample names, using an inherently generated rename_map.
+    # source_lst can only contains lc, chip and hc, indicating where this data is originally from for name resolving.
     sample_lst = []
     for i, df in enumerate(df_lst):
         if source_lst[i] == 'lc':
@@ -242,6 +243,14 @@ def extract_GP(r):
     r['FORMAT'] = 'GP'
     for i in samples:
         r[i] = r[i].split(':')[pos]
+    return r
+
+def retain_likely_GP(r):
+    samples = valid_sample(r)
+    r['FORMAT'] = 'GP'
+    for i in samples:
+        GPs = r[i].split(',')
+        r[i] = max([float(i) for i in GPs])
     return r
 
 def extract_LDS(r, convert_to_GP = True):
