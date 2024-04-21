@@ -150,9 +150,11 @@ def filter_afs(df1, df2, diff=0.2, z_score=None):
         res = res[abs(res['prop_x'] - res['prop_y']) < diff]
         return res.drop(columns=['prop_y']).rename(columns={'prop_x': 'prop'})
 
-def extract_hla_type(input_vcf, csv_path, json_path):
+def extract_hla_type(input_vcf, csv_path, json_path, two_field = True):
     vcf = read_vcf(input_vcf)
     vcf = vcf[vcf['ID'].str.contains('HLA')]
+    if two_field:
+        vcf = vcf[vcf['ID'].str.contains(':')]
     samples = list(vcf.columns[9:])
 
     for i in samples:
