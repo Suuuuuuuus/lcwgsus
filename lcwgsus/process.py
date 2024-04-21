@@ -152,6 +152,7 @@ def filter_afs(df1, df2, diff=0.2, z_score=None):
 
 def extract_hla_type(input_vcf, csv_path, json_path):
     vcf = read_vcf(input_vcf)
+    vcf = vcf[vcf['ID'].str.contains('HLA')]
     samples = list(vcf.columns[9:])
 
     for i in samples:
