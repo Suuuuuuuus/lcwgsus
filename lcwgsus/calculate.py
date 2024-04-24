@@ -141,7 +141,7 @@ def calculate_imputation_accuracy_metrics(r1, r2):
     r2_homalt = r2[r1 == 2]
     n_homalt = r1_homalt.size
     
-    n_sample = n_het + n_homalt
+    n_sample = n_rf_all - np.sum((r1 == 0) & (r2 <= 0.5)) # This is the number of sample which is not (0/0 and also imputed to be 0/0) 
     n_nrc = np.sum(np.abs(r1_het - r2_het) < 0.5) + np.sum(np.abs(r1_homalt - r2_homalt) < 0.5)
     if n_sample == 0:
         nrc = -9
