@@ -23,7 +23,10 @@ from scipy.stats import poisson
 from scipy.stats import chi2
 from scipy.stats import friedmanchisquare
 from scipy.stats import studentized_range
+
 pd.options.mode.chained_assignment = None
+
+from .variables import *
 
 __all__ = ["get_mem", "check_outdir",
            "generate_rename_map", "get_genotype",
@@ -84,8 +87,9 @@ def get_imputed_dosage(df: pd.DataFrame, colname: str = 'call') -> float:
     else:
         return s.split(':')[2]
 
-def generate_rename_map(mini = False, sample_linker = 'data/metadata/sample_linker.csv',
-                        lc_sample_prefix = 'GM', chip_sample_prefix = 'GAM'):
+
+def generate_rename_map(mini=False, sample_linker=SAMPLE_LINKER_FILE):
+    print(sample_linker)
     sample_linker = pd.read_table(sample_linker, sep=',')
     if not mini:
         sample_linker = sample_linker[~sample_linker['Sample_Name'].str.
@@ -151,7 +155,7 @@ def combine_df(lst: List[pd.DataFrame]) -> pd.DataFrame:
         df = pd.concat([df, lst[i]])
     return df.sort_values(by = df.columns[:2].to_list()).reset_index(drop = True)
 
-def intersect_dfs(lst: List[pd.DataFrame], common_cols: List[str] = ['chr', 'pos', 'ref', 'alt']) -> List[pd.DataFrame]:
+def intersect_dfs(lst: List[pd.DataFrame], common_cols: List[str] = COMMON_COLS) -> List[pd.DataFrame]:
     common_indices = lst[0].set_index(common_cols).index
     for i in range(1, len(lst)):
         common_indices = common_indices.intersection(lst[i].set_index(common_cols).index)
@@ -159,7 +163,6 @@ def intersect_dfs(lst: List[pd.DataFrame], common_cols: List[str] = ['chr', 'pos
     for i in range(len(lst)):
         lst[i] = lst[i].set_index(common_cols).loc[common_indices].reset_index()
     return lst
-
 
 def find_matching_samples(chip_samples, rename_map, lc='chip'):
     if lc == 'chip':
@@ -172,9 +175,7 @@ def find_matching_samples(chip_samples, rename_map, lc='chip'):
                 lc_to_retain.append(val_to_key[s])
         return lc_to_retain
 
-def resolve_common_samples(df_lst, source_lst, rename_map, mini = False, vcf_cols = [
-    'chr', 'pos', 'ID', 'ref', 'alt', 'QUAL', 'FILTER', 'INFO', 'FORMAT'
-]):
+def resolve_common_samples(df_lst, source_lst, rename_map, mini = False, vcf_cols = VCF_COLS):
     # This utility takes a list of vcfs as input, and intersect them to get a common subset of samples, and return the list. It could resolve different types of sample names, using an inherently generated rename_map.
     # source_lst can only contains lc, chip and hc, indicating where this data is originally from for name resolving.
     sample_lst = []
@@ -220,7 +221,7 @@ def extract_info(df, info_cols = ['EAF', 'INFO_SCORE'], attribute = 'info', drop
         df = df.drop(columns = [attribute])
     return df
 
-def encode_genotype(r: pd.Series, chip_prefix = 'GAM') -> float:
+def encode_genotype(r: pd.Series, chip_prefix = CHIP_SAMPLE_PREFIX) -> float:
     ### Encode a row of genotypes to integers.
     samples = r.index[r.index.str.contains(chip_prefix)]
     for i in samples:
