@@ -89,7 +89,6 @@ def get_imputed_dosage(df: pd.DataFrame, colname: str = 'call') -> float:
 
 
 def generate_rename_map(mini=False, sample_linker=SAMPLE_LINKER_FILE):
-    print(sample_linker)
     sample_linker = pd.read_table(sample_linker, sep=',')
     if not mini:
         sample_linker = sample_linker[~sample_linker['Sample_Name'].str.

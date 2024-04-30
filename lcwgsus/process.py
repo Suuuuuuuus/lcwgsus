@@ -28,6 +28,7 @@ pd.options.mode.chained_assignment = None
 from .auxiliary import *
 from .save import *
 from .read import *
+from .variables import *
 
 __all__ = ["aggregate_r2", "extract_hla_type", "convert_indel", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs", "imputation_calculation_preprocess"]
 
@@ -197,30 +198,18 @@ def extract_hla_type(input_vcf, csv_path, json_path, two_field = True):
         with open(json_path, "w") as json_file:
             json.dump(hla_abnormal, json_file)
 
-
 def imputation_calculation_preprocess(
         truth_vcf,
         imp_vcf,
         af_txt,
-        sample_linker='data/metadata/sample_linker.csv',
-        MAF_ary=np.array([
-            0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05,
-            0.1, 0.2, 0.5, 0.95, 1
-        ]),
-        from_server=False,
         chromosome=None,
-        mini=False,
         save_vcfs=False,
         lc_vcf_outdir=None,
         hc_vcf_outdir=None,
         af_outdir=None,
         lc_vcf_name=None,
         hc_vcf_name=None,
-        af_name=None,
-        common_cols=['chr', 'pos', 'ref', 'alt'],
-        lc_sample_prefix='GM',
-        chip_sample_prefix='GAM',
-        seq_sample_prefix='IDT'):
+        af_name=None):
 
     # Truth_vcf should have GT rather than DS in its FORMAT field, whereas imp_vcf has to have DS
     af = read_af(af_txt)
@@ -236,7 +225,7 @@ def imputation_calculation_preprocess(
     chip = res[0]
     lc = res[1]
     af = res[2]
-    
+
     chip = reorder_cols(chip)
     lc = reorder_cols(lc)
     lc.columns = chip.columns
@@ -246,24 +235,24 @@ def imputation_calculation_preprocess(
     if save_vcfs:
         lc_metadata = read_metadata(imp_vcf, new_cols = list(lc.columns[9:]))
         hc_metadata = read_metadata(truth_vcf, new_cols = list(chip.columns[9:]))
-        
+
         save_vcf(lc,
                  lc_metadata,
                  outdir=lc_vcf_outdir,
                  save_name=lc_vcf_name)
-        
+
         save_vcf(chip,
                  hc_metadata,
                  outdir=hc_vcf_outdir,
                  save_name=hc_vcf_name)
-        
+
         if not os.path.exists(af_outdir):
             os.makedirs(af_outdir)
         af.to_csv(af_outdir + af_name, sep = '\t', header = False, index = False)
 
     lc = lc.apply(extract_DS, axis=1)
-    chip = chip.apply(encode_genotype, axis=1)    
-        
+    chip = chip.apply(encode_genotype, axis=1)
+
     lc = lc.drop(columns=drop_cols)
     chip = chip.drop(columns=drop_cols)
 

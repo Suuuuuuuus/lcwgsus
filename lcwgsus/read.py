@@ -24,8 +24,9 @@ from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
+from .variables import *
 
-__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af", "read_r2"]
+__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af"]
 
 def read_metadata(file, filetype = 'gzip', comment = '#', new_cols = None):
     if filetype == 'gzip':
@@ -34,13 +35,12 @@ def read_metadata(file, filetype = 'gzip', comment = '#', new_cols = None):
     else:
         with open(file, 'r') as f:
             metadata = [l for l in f if l.startswith(comment)]
-    
+
     if new_cols is not None:
         tmp = metadata[-1].split('\t')[:9] + new_cols
         metadata[-1] = '\t'.join(tmp) + '\n'
-    
-    return metadata
 
+    return metadata
 
 def read_vcf(file, sample='call', q=None):
     colname = read_metadata(file)
@@ -103,40 +103,29 @@ def read_af(file, q = None):
     else:
         q.put(df)
 
-def read_r2(panels, samples, indir = '../imputation_accuracy/imputation_accuracy_oneKGafs/', drop=3):
-    dfs = []
-    for i in panels:
-        for j in samples:
-            tmp = pd.read_csv(indir+j+"/"+i+"_imputation_accuracy.csv", sep = ',', dtype = {
-                'MAF': float,
-                'Imputation Accuracy': float,
-                'Bin Count': str
-            }).iloc[drop:,:]
-            tmp['panel'] = i
-            tmp['Bin Count'] = j
-            tmp.columns = ['AF', 'corr', 'sample', 'panel']
-            tmp['AF'] = (100*tmp['AF']).apply(convert_to_str)
-            tmp['AF'] = tmp['AF'].shift(1).fillna('0') + '-' + tmp['AF']
-            tmp['AF'] = tmp['AF'].astype("category")
-            dfs.append(tmp)
-    bin_count = pd.read_csv(indir+j+"/"+i+"_imputation_accuracy.csv", sep = ',', dtype = {
-                'MAF': float,
-                'Imputation Accuracy': float,
-                'Bin Count': int
-            }).iloc[drop:,:].reset_index(drop = True)[['Bin Count']]
-    res = pd.concat(dfs).reset_index(drop = True)
-    return res, bin_count
 
-def multi_parse_vcf(chromosomes, files, parse = True, sample = 'call', combine = True,
-               info_cols = ['EAF', 'INFO_SCORE'], attribute = 'info', fmt = 'format', drop_attribute = True, drop_lst = ['id', 'qual', 'filter']):
+def multi_parse_vcf(chromosomes,
+                    files,
+                    parse=True,
+                    sample='call',
+                    combine=True,
+                    info_cols=['EAF', 'INFO_SCORE'],
+                    attribute='info',
+                    fmt='format',
+                    drop_attribute=True,
+                    drop_lst=['id', 'qual', 'filter']):
     manager = multiprocessing.Manager()
     q = manager.Queue()
     processes = []
     for i in range(len(chromosomes)):
         if parse:
-            tmp = multiprocessing.Process(target=parse_vcf, args=(files[i], sample, q, info_cols, attribute, fmt, drop_attribute, drop_lst))
+            tmp = multiprocessing.Process(target=parse_vcf,
+                                          args=(files[i], sample, q, info_cols,
+                                                attribute, fmt, drop_attribute,
+                                                drop_lst))
         else:
-            tmp = multiprocessing.Process(target=read_vcf, args=(files[i], sample, q))
+            tmp = multiprocessing.Process(target=read_vcf,
+                                          args=(files[i], sample, q))
         tmp.start()
         processes.append(tmp)
     for process in processes:
@@ -148,6 +137,7 @@ def multi_parse_vcf(chromosomes, files, parse = True, sample = 'call', combine =
         return combine_df(res_lst)
     else:
         return res_lst
+
 def multi_read_af(chromosomes, files, combine = True):
     manager = multiprocessing.Manager()
     q = manager.Queue()

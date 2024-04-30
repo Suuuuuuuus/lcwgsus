@@ -25,6 +25,7 @@ from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
+from .variables import *
 
 __all__ = ["save_vcf", "rezip_vcf", "save_lst"]
 

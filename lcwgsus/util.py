@@ -28,12 +28,11 @@ from .auxiliary import *
 from .process import *
 from .read import *
 from .plot import *
+from .variables import *
 
 __all__ = ["visualise_single_variant", "visualise_single_variant_v2"]
 
-def visualise_single_variant(c, pos, vcf_lst, source_lst, labels_lst, vcf_cols = [
-    'chr', 'pos', 'ID', 'ref', 'alt', 'QUAL', 'FILTER', 'INFO', 'FORMAT'
-], mini = False, save_fig = False, outdir = None, save_name = None):
+def visualise_single_variant(c, pos, vcf_lst, source_lst, labels_lst, vcf_cols = VCF_COLS, mini = False, save_fig = False, outdir = None, save_name = None):
     site = 'chr' + str(c) + ':' + str(pos) + '-' + str(pos)
     df_ary = []
     n = len(vcf_lst)
@@ -47,9 +46,9 @@ def visualise_single_variant(c, pos, vcf_lst, source_lst, labels_lst, vcf_cols =
         col = vcf_cols + name
         df = pd.DataFrame([data], columns=col)
         df_ary.append(df)
-        
+
     df_ary = resolve_common_samples(df_ary, source_lst, rename_map)
-    
+
     for i in range(n):
         if 'GP' in df_ary[i].loc[0, 'FORMAT']:
             df_ary[i] = df_ary[i].apply(extract_GP, axis=1)
@@ -63,9 +62,7 @@ def visualise_single_variant(c, pos, vcf_lst, source_lst, labels_lst, vcf_cols =
     plot_violin(res, x = 'GT', y = 'GP', hue = 'label', title = site, save_fig = save_fig, outdir = outdir, save_name = save_name)
     return None
 
-def visualise_single_variant_v2(c, pos, vcf_lst, source_lst, labels_lst, vcf_cols = [
-    'chr', 'pos', 'ID', 'ref', 'alt', 'QUAL', 'FILTER', 'INFO', 'FORMAT'
-], mini = False, save_fig = False, outdir = None, save_name = None):
+def visualise_single_variant_v2(c, pos, vcf_lst, source_lst, labels_lst, vcf_cols = VCF_COLS, mini = False, save_fig = False, outdir = None, save_name = None):
     site = 'chr' + str(c) + ':' + str(pos) + '-' + str(pos)
     df_ary = []
     n = len(vcf_lst)
@@ -79,9 +76,9 @@ def visualise_single_variant_v2(c, pos, vcf_lst, source_lst, labels_lst, vcf_col
         col = vcf_cols + name
         df = pd.DataFrame([data], columns=col)
         df_ary.append(df)
-        
+
     df_ary = resolve_common_samples(df_ary, source_lst, rename_map)
-    
+
     df_ary[0] = df_ary[0].apply(extract_GT, axis = 1)
     df_ary[0] = df_ary[0].drop(columns = vcf_cols)
     df_ary[0] = df_ary[0].T.rename(columns = {0: 'GT'})
@@ -93,13 +90,13 @@ def visualise_single_variant_v2(c, pos, vcf_lst, source_lst, labels_lst, vcf_col
             df_ary[i] = df_ary[i].apply(extract_DS, axis=1)
         else:
             df_ary[i] = df_ary[i].apply(extract_LDS_to_DS, axis=1)
-        
+
         df_ary[i] = df_ary[i].drop(columns = vcf_cols)
         df_ary[i] = df_ary[i].T.rename(columns = {0: 'DS'})
         res = pd.merge(df_ary[i].reset_index(), df_ary[0].reset_index(), on = 'index').drop(columns = ['index'])
         res['label'] = labels_lst[i]
         res_ary.append(res)
-        
+
     res = pd.concat(res_ary)
 
     plot_violin(res, x = 'GT', y = 'DS', hue = 'label', title = site, save_fig = save_fig, outdir = outdir, save_name = save_name)
