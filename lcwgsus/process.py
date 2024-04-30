@@ -202,8 +202,6 @@ def imputation_calculation_preprocess(
         truth_vcf,
         imp_vcf,
         af_txt,
-        lc_extract_func=extract_DS,
-        chip_extract_func=encode_genotype,
         chromosome=None,
         save_vcfs=False,
         lc_vcf_outdir=None,
@@ -252,8 +250,8 @@ def imputation_calculation_preprocess(
             os.makedirs(af_outdir)
         af.to_csv(af_outdir + af_name, sep = '\t', header = False, index = False)
 
-    lc = lc.apply(lc_extract_func, axis=1)
-    chip = chip.apply(chip_extract_func, axis=1)
+    lc = lc.apply(extract_DS, axis=1)
+    chip = chip.apply(encode_genotype, axis=1)
 
     lc = lc.drop(columns=drop_cols)
     chip = chip.drop(columns=drop_cols)
