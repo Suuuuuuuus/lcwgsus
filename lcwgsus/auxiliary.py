@@ -222,7 +222,7 @@ def extract_info(df, info_cols = ['EAF', 'INFO_SCORE'], attribute = 'info', drop
 
 def encode_genotype(r: pd.Series, chip_prefix = CHIP_SAMPLE_PREFIX) -> float:
     ### Encode a row of genotypes to integers.
-    samples = r.index[r.index.str.contains(chip_prefix)]
+    samples = valid_sample(r)
     for i in samples:
         if r[i][:3] == '0|0' or r[i][:3] == '0/0':
             r[i] = 0.
