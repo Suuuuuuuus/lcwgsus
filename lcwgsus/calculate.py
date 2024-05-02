@@ -222,8 +222,6 @@ def calculate_v_imputation_accuracy(chip,
                                     MAF_ary=MAF_ARY,
                                     impacc_colnames=IMPACC_V_COLS,
                                     common_cols=COMMON_COLS,
-                                    chip_sample_prefix=CHIP_SAMPLE_PREFIX,
-                                    lc_sample_prefix=LC_SAMPLE_PREFIX,
                                     save_file=False,
                                     outdir=None,
                                     save_name=None):
@@ -319,24 +317,32 @@ def calculate_weighted_average(ary, weights):
         avg = (ary*weights).sum()/num
     return avg
 
+
 def average_impacc_by_chr(impacc_lst,
-                          MAF_ary = MAF_ARY,
-                         colnames = IMPACC_H_COLS):
+                          MAF_ary=MAF_ARY,
+                          colnames=IMPACC_H_COLS,
+                          save_file=False,
+                          outdir=None,
+                          save_name=None):
     impacc = pd.DataFrame({'AF': MAF_ary})
     for i in range(MAF_ary.size):
         tmp_lst = [df[df['AF'] == MAF_ary[i]] for df in impacc_lst]
         merge_df = pd.concat(tmp_lst)
         metrics = [merge_df[colnames[0]].sum()]
         for j in range(len(colnames)):
-            if j%3 == 1:
-                triplet = merge_df[colnames[j:j+3]]
+            if j % 3 == 1:
+                triplet = merge_df[colnames[j:j + 3]]
                 triplet = triplet[triplet[colnames[j]] != -9]
                 if triplet.shape[0] == 0:
                     metrics = metrics + [-9, 0, 0]
                 elif triplet.shape[0] == 1:
                     metrics = metrics + list(triplet.iloc[0, :].values)
                 else:
-                    metrics = metrics + [calculate_weighted_average(triplet.iloc[:, 0].values, triplet.iloc[:, 2]), triplet.iloc[:, 1].sum(), triplet.iloc[:, 2].sum()]
+                    metrics = metrics + [
+                        calculate_weighted_average(triplet.iloc[:, 0].values,
+                                                   triplet.iloc[:, 2]),
+                        triplet.iloc[:, 1].sum(), triplet.iloc[:, 2].sum()
+                    ]
         if i == 0:
             res_ary = metrics
         else:
@@ -344,6 +350,12 @@ def average_impacc_by_chr(impacc_lst,
     res_ary = res_ary.T
     for name, col in zip(colnames, res_ary):
         impacc[name] = col
+
+    if save_file:
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+        impacc.to_csv(outdir + save_name, sep='\t', index=False, header=True)
+
     return impacc
 
 
