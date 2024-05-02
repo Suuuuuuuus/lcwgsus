@@ -255,15 +255,13 @@ def extract_DS(r):
     )  # This checks which fields is DS, but might want to twist for TOPMed imputation
     r['FORMAT'] = 'DS'
     for i in samples:
-        # r[i] = float(r[i].split(':')[pos])
         r[i] = r[i].split(':')[pos]
         if r[i] != '.':
             r[i] = float(r[i])
+            if r[i] < 0 or r[i] > 2:
+                r[i] = np.nan
         else:
-            print(r)
             r[i] = np.nan
-        # if r[i] < 0 or r[i] > 2:
-        #     r[i] = np.nan
     return r
 
 def extract_GP(r):
