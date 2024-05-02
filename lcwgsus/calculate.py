@@ -27,7 +27,7 @@ from .auxiliary import *
 from .variables import *
 
 __all__ = [
-    "calculate_af", "calculate_ss_cumsum_coverage",
+    "calculate_per_bin_kmer_error_rate", "calculate_af", "calculate_ss_cumsum_coverage",
     "calculate_average_info_score",
     "calculate_corrcoef", "calculate_concordance",
     "calculate_imputation_accuracy_metrics", "average_h_metrics",
@@ -37,6 +37,24 @@ __all__ = [
     "round_to_nearest_magnitude", "calculate_imputation_summary_metrics",
     "calculate_imputation_sumstats"
 ]
+
+# To clean
+def calculate_per_bin_kmer_error_rate(code, strand, file, intervals = [50,100,150,200,250,300,350,400,450,500,550,600]):
+    result = pd.read_csv(file, sep = '\t', usecols = ['read_id', 'number_of_kmers_at_threshold', 'number_of_solid_kmers_at_threshold'])
+    result['read_id'] = result['read_id'].str.split().str[0]
+    bins = pd.read_csv('results/kmer/'+code+'/fragment_length.tsv', sep = '\t', header = None, names = ['read_id', 'bin'], dtype={'read_id': 'string', 'bin': 'int'})
+    df = pd.merge(result, bins, on='read_id', how="left")
+
+    error_rate_ary=[]
+    for i in intervals:
+        error_rate = df.loc[df['bin'] == i, 'number_of_solid_kmers_at_threshold'].sum()/df.loc[df['bin'] == i, 'number_of_kmers_at_threshold'].sum()
+        error_rate_ary.append(error_rate)
+    error_rate = df.loc[df['bin']>intervals[-1], 'number_of_solid_kmers_at_threshold'].sum()/df.loc[df['bin']>intervals[-1], 'number_of_kmers_at_threshold'].sum()
+    error_rate_ary.append(error_rate)
+
+    res = pd.DataFrame({code: error_rate_ary}).T
+    res.to_csv('results/kmer/'+code+'/read'+strand+'/per_bin_kmer_error_rate_read'+strand+'.txt', header=False, sep='\t')
+
 
 def calculate_af(df: pd.DataFrame, drop: bool = True) -> pd.DataFrame: # WARNING:This utility might be erroneous!
     # df should have columns chr, pos, ref, alt and genotypes
