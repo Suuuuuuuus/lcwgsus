@@ -150,6 +150,8 @@ def plot_pc(df, num_PC=2, save_fig=False, save_name='graphs/PCA.png') -> None:
     # Input df has 'PC_1', 'PC_2', ... columns and an additional column called 'ethnic'
     plt.figure(figsize=(10, 8))
 
+    PC1 = df.columns[df.columns.str.contains('PC')][0]
+    PC2 = df.columns[df.columns.str.contains('PC')][1]
     if num_PC == 2:
         labels = df['ethnic']
         targets = labels.unique()
@@ -157,8 +159,8 @@ def plot_pc(df, num_PC=2, save_fig=False, save_name='graphs/PCA.png') -> None:
         for target, color in zip(targets, colors):
             indices_to_keep = labels == target
             plt.scatter(
-                df.loc[indices_to_keep, 'PC_1'],
-                df.loc[indices_to_keep, 'PC_2'],
+                df.loc[indices_to_keep, PC1],
+                df.loc[indices_to_keep, PC2],
                 color=color,
                 label=target,
                 s=50,
