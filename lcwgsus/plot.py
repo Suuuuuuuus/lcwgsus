@@ -273,8 +273,6 @@ def plot_imputation_accuracy_gw(impacc_lst,
                                 save_fig=False,
                                 outdir=None,
                                 save_name=None):
-    ceil = 0
-    floor = 100
     cols = ['AF', metric, metric + '_AC']
     df_lst = [impacc[cols] for impacc in impacc_lst]
 

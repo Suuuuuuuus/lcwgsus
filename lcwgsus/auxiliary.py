@@ -61,7 +61,7 @@ def generate_af_axis(x=MAF_ARY):
     y = x[:-1]
     res_ary = list(x[0])
     shift = x[1:]
-    combine = [i + '-' + j for i, j in zip(y, shift)]
+    combine = res_ary + [i + '-' + j for i, j in zip(y, shift)]
     return combine
 
 def get_genotype(df: pd.DataFrame, colname: str = 'call') -> float:
