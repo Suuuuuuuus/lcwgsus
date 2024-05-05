@@ -229,7 +229,7 @@ def plot_imputation_accuracy_typed(impacc_lst,
         label = c1 if labels is None else labels[i]
 
         x = np.arange(triplet.shape[0])
-        afs = generate_af_axis(triplet[c0])
+        afs = generate_af_axis(triplet[c0].values)
         vals = triplet[c1]
         color = triplet[c2]
 
@@ -294,7 +294,7 @@ def plot_imputation_accuracy_gw(impacc_lst,
         label = c1 if labels is None else labels[i]
 
         x = np.arange(triplet.shape[0])
-        afs = generate_af_axis(triplet[c0])
+        afs = generate_af_axis(triplet[c0].values)
         vals = triplet[c1]
         color = triplet[c2]
 
