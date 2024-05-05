@@ -262,16 +262,17 @@ def plot_imputation_accuracy_typed(impacc_lst,
         plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
     return None
 
+
 def plot_imputation_accuracy_gw(impacc_lst,
-                             metric='r2',
-                             labels=None,
-                             threshold=None,
-                             title='',
-                             marker_size=100,
-                             cmap_str='GnBu',
-                             save_fig=False,
-                             outdir=None,
-                             save_name=None):
+                                metric='r2',
+                                labels=None,
+                                threshold=None,
+                                title='',
+                                marker_size=100,
+                                cmap_str='GnBu',
+                                save_fig=False,
+                                outdir=None,
+                                save_name=None):
     ceil = 0
     floor = 100
     cols = ['AF', metric, metric + '_AC']
@@ -283,12 +284,14 @@ def plot_imputation_accuracy_gw(impacc_lst,
 
     cmap = plt.get_cmap('GnBu')
     magnitude = 5
-    bounds = np.logspace(3, 8, magnitude+1)
+    bounds = np.logspace(3, 8, magnitude + 1)
     norm = mcolors.BoundaryNorm(bounds, cmap.N)
     fmt = lambda x, pos: '{:.0e}'.format(x)
 
     for i in range(len(df_lst)):
-        triplet = df_lst[i][df_lst[i]['AF'] >= threshold]
+        triplet = df_lst[i]
+        if threshold is not None:
+            triplet = triplet[triplet['AF'] >= threshold] 
         c0, c1, c2 = tuple(list(triplet.columns))
 
         label = c1 if labels is None else labels[i]
@@ -326,6 +329,7 @@ def plot_imputation_accuracy_gw(impacc_lst,
             os.makedirs(outdir)
         plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
     return None
+
 
 def plot_violin(df,
                 x,
