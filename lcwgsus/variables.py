@@ -61,3 +61,17 @@ MAF_ARY = np.array([
 
 CASE_CONTROLS = ['non-malaria_control', 'mild_malaria', 'severe_malaria']
 ETHNICITIES = ['fula', 'jola', 'mandinka', 'wollof']
+
+
+def generate_af_axis(x=MAF_ARY):
+    x = [
+        str(int(i)) if i == int(i) else str(float(i)).rstrip('0').rstrip('.')
+        for i in x * 100
+    ]
+    y = x[:-1]
+    res_ary = list(x[0])
+    shift = x[1:]
+    combine = [i + '-' + j for i, j in zip(y, shift)]
+    return combine
+
+AF_AXIS = generate_af_axis(MAF_ARY)

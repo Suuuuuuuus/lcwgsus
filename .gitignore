@@ -21,3 +21,4 @@ build/
 */*/*.out
 */*/*.tex.bak
 **/*.DS_Store
+*.Rhistory
