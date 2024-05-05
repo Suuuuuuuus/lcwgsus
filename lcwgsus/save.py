@@ -18,10 +18,6 @@ import seaborn as sns
 import statsmodels.api as sm
 import scipy
 from typing import Union, Tuple, List
-from scipy.stats import poisson
-from scipy.stats import chi2
-from scipy.stats import friedmanchisquare
-from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
 from .auxiliary import *

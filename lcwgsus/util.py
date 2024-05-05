@@ -101,3 +101,18 @@ def visualise_single_variant_v2(c, pos, vcf_lst, source_lst, labels_lst, vcf_col
 
     plot_violin(res, x = 'GT', y = 'DS', hue = 'label', title = site, save_fig = save_fig, outdir = outdir, save_name = save_name)
     return None
+def get_badly_imputed_regions(indir, threshold = 0.5, placeholder = -9, 
+                              chromosomes = CHROMOSOMES_ALL, retain_cols = '', save_file = False, outdir = '', save_name = ''):
+    hs = [indir + "chr" + c + ".h.tsv" for c in chromosomes]
+    hs_lst = [pd.read_csv(i, sep = '\t') for i in hs]
+    merged = pd.concat(hs_lst).reset_index(drop = True)
+    merged = merged[merged['r2'] != placeholder]
+    res_df = merged[merged['r2'] < threshold]
+    
+    if retain_cols != '':
+        res_df = res_df[retain_cols]
+    
+    if save_file:
+        check_outdir(outdir)
+        res_df.to_csv(outdir + save_name, sep = '\t', header = True, index = False) 
+    return res_df
