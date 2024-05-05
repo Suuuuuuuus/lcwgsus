@@ -188,7 +188,8 @@ def plot_pc(df, num_PC=2, save_fig=False, save_name='graphs/PCA.png') -> None:
     return None
 
 
-def plot_imputation_accuracy(df_lst,
+def plot_imputation_accuracy_typed(impacc_lst,
+                             metric='r2',
                              labels=None,
                              title='',
                              marker_size=100,
@@ -198,6 +199,9 @@ def plot_imputation_accuracy(df_lst,
                              save_name=None):
     ceil = 0
     floor = 100
+    cols = ['AF', metric, metric + '_AC']
+    df_lst = [impacc[cols] for impacc in impacc_lst]
+
     for triplet in df_lst:
         c0, c1, c2 = tuple(list(triplet.columns))
         triplet[c1] = triplet[c1].replace(-9, 0)
@@ -225,7 +229,7 @@ def plot_imputation_accuracy(df_lst,
         label = c1 if labels is None else labels[i]
 
         x = np.arange(triplet.shape[0])
-        afs = triplet[c0]
+        afs = generate_af_axis(triplet[c0])
         vals = triplet[c1]
         color = triplet[c2]
 
@@ -245,7 +249,7 @@ def plot_imputation_accuracy(df_lst,
                  format=FuncFormatter(fmt),
                  label='Allele Frequency Counts')
 
-    plt.xlabel('gnomAD allele frequencies')
+    plt.xlabel('gnomAD allele frequencies (%)')
     plt.title(title)
     plt.legend()
     plt.ylabel('Aggregated imputation accuracy ($r^2$)')
@@ -258,6 +262,70 @@ def plot_imputation_accuracy(df_lst,
         plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
     return None
 
+def plot_imputation_accuracy_gw(impacc_lst,
+                             metric='r2',
+                             labels=None,
+                             threshold=None,
+                             title='',
+                             marker_size=100,
+                             cmap_str='GnBu',
+                             save_fig=False,
+                             outdir=None,
+                             save_name=None):
+    ceil = 0
+    floor = 100
+    cols = ['AF', metric, metric + '_AC']
+    df_lst = [impacc[cols] for impacc in impacc_lst]
+
+    plt.figure(figsize=(10, 6))
+    ax = plt.subplot(1, 1, 1)
+    plt.grid(False)
+
+    cmap = plt.get_cmap('GnBu')
+    magnitude = 5
+    bounds = np.logspace(3, 8, magnitude+1)
+    norm = mcolors.BoundaryNorm(bounds, cmap.N)
+    fmt = lambda x, pos: '{:.0e}'.format(x)
+
+    for i in range(len(df_lst)):
+        triplet = df_lst[i][df_lst[i]['AF'] >= threshold]
+        c0, c1, c2 = tuple(list(triplet.columns))
+
+        label = c1 if labels is None else labels[i]
+
+        x = np.arange(triplet.shape[0])
+        afs = generate_af_axis(triplet[c0])
+        vals = triplet[c1]
+        color = triplet[c2]
+
+        plt.plot(x, vals, label=label)
+        plt.xticks(x, afs, rotation=45)
+
+        im = ax.scatter(x,
+                        vals,
+                        c=color,
+                        edgecolor='black',
+                        cmap=cmap,
+                        norm=norm,
+                        s=marker_size)
+    plt.colorbar(im,
+                 boundaries=bounds,
+                 ticks=bounds,
+                 format=FuncFormatter(fmt),
+                 label='Allele Frequency Counts')
+
+    plt.xlabel('gnomAD allele frequencies (%)')
+    plt.title(title)
+    plt.legend()
+    plt.ylabel('Aggregated imputation accuracy ($r^2$)')
+    ax = plt.gca()
+    ax.grid()
+
+    if save_fig:
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+        plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
+    return None
 
 def plot_violin(df,
                 x,

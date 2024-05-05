@@ -28,7 +28,7 @@ pd.options.mode.chained_assignment = None
 
 from .variables import *
 
-__all__ = ["get_mem", "check_outdir",
+__all__ = ["get_mem", "check_outdir", "generate_af_axis",
            "generate_rename_map", "get_genotype",
            "get_imputed_dosage", "recode_indel",
            "encode_hla", "convert_to_str", "file_to_list",
@@ -52,6 +52,17 @@ def check_outdir(outdir: str) -> None:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     return None
+
+def generate_af_axis(x=MAF_ARY):
+    x = [
+        str(int(i)) if i == int(i) else str(float(i)).rstrip('0').rstrip('.')
+        for i in x * 100
+    ]
+    y = x[:-1]
+    res_ary = list(x[0])
+    shift = x[1:]
+    combine = [i + '-' + j for i, j in zip(y, shift)]
+    return combine
 
 def get_genotype(df: pd.DataFrame, colname: str = 'call') -> float:
     ### Encode a column of genotypes to integers.
