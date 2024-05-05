@@ -30,7 +30,7 @@ from .read import *
 from .plot import *
 from .variables import *
 
-__all__ = ["visualise_single_variant", "visualise_single_variant_v2"]
+__all__ = ["visualise_single_variant", "visualise_single_variant_v2", "get_badly_imputed_regions"]
 
 def visualise_single_variant(c, pos, vcf_lst, source_lst, labels_lst, vcf_cols = VCF_COLS, mini = False, save_fig = False, outdir = None, save_name = None):
     site = 'chr' + str(c) + ':' + str(pos) + '-' + str(pos)
