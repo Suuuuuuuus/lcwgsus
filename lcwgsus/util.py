@@ -30,7 +30,11 @@ from .read import *
 from .plot import *
 from .variables import *
 
-__all__ = ["visualise_single_variant", "visualise_single_variant_v2", "get_badly_imputed_regions"]
+__all__ = [
+    "visualise_single_variant", "visualise_single_variant_v2",
+    "get_badly_imputed_regions", "get_n_variants_vcf", "get_n_variants_impacc"
+]
+
 
 def visualise_single_variant(c, pos, vcf_lst, source_lst, labels_lst, vcf_cols = VCF_COLS, mini = False, save_fig = False, outdir = None, save_name = None):
     site = 'chr' + str(c) + ':' + str(pos) + '-' + str(pos)
@@ -104,7 +108,7 @@ def visualise_single_variant_v2(c, pos, vcf_lst, source_lst, labels_lst, vcf_col
 
 
 def get_badly_imputed_regions(indir,
-                              on = 'r2',
+                              on='r2',
                               threshold=0.5,
                               placeholder=-9,
                               chromosomes=CHROMOSOMES_ALL,
@@ -117,7 +121,7 @@ def get_badly_imputed_regions(indir,
     merged = pd.concat(hs_lst).reset_index(drop=True)
     merged = merged[merged[on] != placeholder]
     res_df = merged[merged[on] < threshold]
-    res_df = res_df.sort_values(by = on, ascending = True)
+    res_df = res_df.sort_values(by=on, ascending=True)
 
     if retain_cols != '':
         res_df = res_df[retain_cols]
@@ -126,3 +130,35 @@ def get_badly_imputed_regions(indir,
         check_outdir(outdir)
         res_df.to_csv(outdir + save_name, sep='\t', header=True, index=False)
     return res_df
+
+def get_n_variants_vcf(vcf):
+    if type(vcf) == str:
+        command = "zgrep -v ^# " + vcf + " | wc -l"
+        count = subprocess.run(command, shell = True, capture_output = True, text = True).stdout.rstrip('\n')
+        return int(count)
+    elif type(vcf) == list:
+        count_sum = 0
+        for df in vcf:
+            command = "zgrep -v ^# " + df + " | wc -l"
+            count = subprocess.run(command, shell = True, capture_output = True, text = True).stdout.rstrip('\n')
+            count_sum += int(count)
+        return count_sum
+    else:
+        print('Invalid input types. It has to be a str of a vcf file or a list of vcf files.')
+        return -9
+
+def get_n_variants_impacc(impacc, colname):
+    if type(impacc) == str:
+        df = pd.read_csv(impacc, sep = '\t')
+        count = df[colname].sum()
+        return count
+    elif type(impacc) == list:
+        count_sum = 0
+        for i in impacc:
+            df = pd.read_csv(i, sep = '\t')
+            count = df[colname].sum()
+            count_sum += count
+        return count_sum
+    else:
+        print('Invalid input types. It has to be a str of an impacc file or a list of impacc files.')
+        return -9
