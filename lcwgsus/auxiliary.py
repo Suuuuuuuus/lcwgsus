@@ -29,6 +29,7 @@ pd.options.mode.chained_assignment = None
 from .variables import *
 
 __all__ = ["get_mem", "check_outdir", "generate_af_axis",
+           "flip_snp", "fix_strand",
            "generate_rename_map", "get_genotype",
            "get_imputed_dosage", "recode_indel",
            "encode_hla", "convert_to_str", "file_to_list",
@@ -53,6 +54,7 @@ def check_outdir(outdir: str) -> None:
         os.makedirs(outdir)
     return None
 
+
 def generate_af_axis(x=MAF_ARY):
     x = [
         str(int(i)) if i == int(i) else str(float(i)).rstrip('0').rstrip('.')
@@ -63,6 +65,29 @@ def generate_af_axis(x=MAF_ARY):
     shift = x[1:]
     combine = res_ary + [i + '-' + j for i, j in zip(y, shift)]
     return combine
+
+
+def flip_snp(n):
+    if n == 'A':
+        return 'T'
+    elif n == 'T':
+        return 'A'
+    elif n == 'C':
+        return 'G'
+    elif n == 'G':
+        return 'C'
+    else:
+        return '.'
+
+
+def fix_strand(r):
+    ref = r['ref']
+    alt = r['alt']
+    snp = r['SNP']
+    if ((r['Strand'] == '-') and (r['ILMN Strand'] == 'TOP')) or ((r['Strand'] == '+') and (r['ILMN Strand'] == 'BOT')):
+        r['ref'] = flip_snp(r['ref'])
+        r['alt'] = flip_snp(r['alt'])
+    return r
 
 def get_genotype(df: pd.DataFrame, colname: str = 'call') -> float:
     ### Encode a column of genotypes to integers.
