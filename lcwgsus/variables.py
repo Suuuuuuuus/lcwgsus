@@ -61,3 +61,6 @@ MAF_ARY = np.array([
 
 CASE_CONTROLS = ['non-malaria_control', 'mild_malaria', 'severe_malaria']
 ETHNICITIES = ['fula', 'jola', 'mandinka', 'wollof']
+
+HLA_GENES = ['A', 'B', 'C', 'DQB1', 'DRB1']
+HLA_LOCI = [i+'1' for i in HLA_GENES] + [i+'2' for i in HLA_GENES]

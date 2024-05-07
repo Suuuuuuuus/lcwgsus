@@ -29,7 +29,7 @@ pd.options.mode.chained_assignment = None
 from .variables import *
 
 __all__ = ["get_mem", "check_outdir", "generate_af_axis",
-           "flip_snp", "fix_strand",
+           "flip_snp", "fix_strand", "read_tsv_as_lst",
            "generate_rename_map", "get_genotype",
            "get_imputed_dosage", "recode_indel",
            "encode_hla", "convert_to_str", "file_to_list",
@@ -54,6 +54,11 @@ def check_outdir(outdir: str) -> None:
         os.makedirs(outdir)
     return None
 
+def read_tsv_as_lst(path): # tsv file should ALWAYS have a single column without header
+    if os.path.exists(path):
+        return list(pd.read_table(path, header = None, names = ['Code'])['Code'].values)
+    else:
+        return []
 
 def generate_af_axis(x=MAF_ARY):
     x = [
