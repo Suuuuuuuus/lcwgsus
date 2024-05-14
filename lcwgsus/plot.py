@@ -289,7 +289,7 @@ def plot_imputation_accuracy_gw(impacc_lst,
     for i in range(len(df_lst)):
         triplet = df_lst[i]
         if threshold is not None:
-            triplet = triplet[triplet['AF'] >= threshold] 
+            triplet = triplet[triplet['AF'] >= threshold]
         c0, c1, c2 = tuple(list(triplet.columns))
 
         label = c1 if labels is None else labels[i]
@@ -349,18 +349,21 @@ def plot_violin(df,
     save_figure(save_fig, outdir, save_name)
     return None
 
+
 def plot_rl_distribution(lst,
-                title='Read length distribution',
-                save_fig=False,
-                outdir=None,
-                save_name=None):
-    plt.figure(figsize = (5,6))
+                         title='Read length distribution',
+                         save_fig=False,
+                         outdir=None,
+                         save_name=None):
+    mean = sum(lst) / len(lst)
+    plt.figure(figsize=(5, 6))
     ax = plt.gca()
-    plt.hist(lst, bins = 20, ec = 'black')
+    plt.hist(lst, bins=20, ec='black')
+    ax.set_xlim(mean - 1000, mean + 1000)
     ax.grid()
     ax.set_xlabel('Length (bases)')
     ax.set_ylabel('Count')
-    
+
     if title is not None:
         ax.set_title(title)
 
