@@ -355,11 +355,10 @@ def plot_rl_distribution(lst,
                          save_fig=False,
                          outdir=None,
                          save_name=None):
-    mean = sum(lst) / len(lst)
     plt.figure(figsize=(5, 6))
     ax = plt.gca()
     plt.hist(lst, bins=20, ec='black')
-    ax.set_xlim(mean - 1000, mean + 1000)
+    ax.set_yscale('log')
     ax.grid()
     ax.set_xlabel('Length (bases)')
     ax.set_ylabel('Count')
