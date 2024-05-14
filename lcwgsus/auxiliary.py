@@ -277,8 +277,11 @@ def encode_genotype(r: pd.Series, chip_prefix = CHIP_SAMPLE_PREFIX) -> float:
             r[i] = np.nan
     return r
 
+
 def valid_sample(r):
-    return r.index[r.index.str.contains('GM') | r.index.str.contains('GAM') | r.index.str.contains('HV') | r.index.str.contains('kb')]
+    # return r.index[r.index.str.contains('GM') | r.index.str.contains('GAM')
+                #    | r.index.str.contains('HV') | r.index.str.contains('kb')]
+    return r.index[r.index.str.contains(r'\d')]
 
 def extract_GT(r):
     samples = valid_sample(r)
