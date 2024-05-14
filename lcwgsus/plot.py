@@ -30,7 +30,7 @@ from .variables import *
 
 __all__ = [
     "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw",
-    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin"
+    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution"
 ]
 
 def save_figure(save: bool, outdir: str, name: str) -> None:
