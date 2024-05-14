@@ -14,13 +14,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import seaborn as sns
-import statsmodels.api as sm
-import scipy
+from collections import Counter
 from typing import Union, Tuple, List
-from scipy.stats import poisson
-from scipy.stats import chi2
-from scipy.stats import friedmanchisquare
-from scipy.stats import studentized_range
 pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
@@ -35,7 +30,7 @@ __all__ = [
     "calculate_v_imputation_accuracy", "average_v_metrics",
     "generate_v_impacc", "calculate_weighted_average", "average_impacc_by_chr",
     "round_to_nearest_magnitude", "calculate_imputation_summary_metrics",
-    "calculate_imputation_sumstats"
+    "calculate_imputation_sumstats", "calculate_shannon_entropy"
 ]
 
 # To clean
@@ -448,3 +443,10 @@ def calculate_imputation_sumstats(
                         header=True,
                         sep='\t')
     return sumstats
+
+def calculate_shannon_entropy(str_lst):
+    counts = Counter(str_lst)
+    total_count = sum(counts.values())
+    proportions = np.array(list(counts.values())) / total_count
+    shannon_index = -np.sum(proportions * np.log(proportions))
+    return shannon_index
