@@ -37,7 +37,7 @@ __all__ = ["get_mem", "check_outdir", "generate_af_axis",
            "intersect_dfs", "resolve_common_samples", "fix_v_metrics",
            "extract_info", "encode_genotype", "valid_sample",
            "extract_DS", "extract_format", "drop_cols",
-           "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP",
+           "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP", "get_rl_distribution",
            "extract_LDS", "extract_LDS_to_DS", "reorder_cols",
            "convert_to_violin", "combine_violins", "bcftools_get_samples"]
 
@@ -403,3 +403,9 @@ def bcftools_get_samples(vcf):
     command = "bcftools query -l" + " " + vcf
     name = subprocess.run(command, shell = True, capture_output = True, text = True).stdout[:-1].split('\n')
     return name
+
+def get_rl_distribution(file):
+    command = "zcat " + file + " | awk 'NR%4==2 {print length($1)}'"
+    rls = subprocess.run(command, shell = True, capture_output = True, text = True).stdout[:-1].split('\n')
+    rls = [int(i) for i in rls]
+    return rls

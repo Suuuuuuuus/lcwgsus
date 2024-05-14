@@ -348,3 +348,21 @@ def plot_violin(df,
 
     save_figure(save_fig, outdir, save_name)
     return None
+
+def plot_rl_distribution(lst,
+                title='Read length distribution',
+                save_fig=False,
+                outdir=None,
+                save_name=None):
+    plt.figure(figsize = (5,6))
+    ax = plt.gca()
+    plt.hist(lst, bins = 20, ec = 'black')
+    ax.grid()
+    ax.set_xlabel('Length (bases)')
+    ax.set_ylabel('Count')
+    
+    if title is not None:
+        ax.set_title(title)
+
+    save_figure(save_fig, outdir, save_name)
+    return None
