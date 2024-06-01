@@ -30,7 +30,7 @@ from .variables import *
 
 __all__ = [
     "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw",
-    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution"
+    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region"
 ]
 
 def save_figure(save: bool, outdir: str, name: str) -> None:
@@ -368,3 +368,46 @@ def plot_rl_distribution(lst,
 
     save_figure(save_fig, outdir, save_name)
     return None
+
+
+def plot_imputation_metric_in_region(
+        h,
+        chr,
+        pos,
+        metric='r2',
+        start=None,
+        end=None,
+        window=1e5,
+        title='Imputation accuracy at selected region',
+        show_fig=True,
+        save_fig=False,
+        outdir=None,
+        save_name=None):
+    h = h[h['chr'] == chr]
+    h = h[h[metric] != -9]
+    if start is not None:
+        s = start
+        e = end
+    else:
+        s = max(pos - window / 2, 0)
+        e = pos + window / 2
+
+    df = h[(h['pos'] < e) & (h['pos'] > s)]
+
+    if show_fig:
+        plt.scatter(df['pos'],
+                    df[metric],
+                    c=df['MAF'],
+                    cmap='GnBu',
+                    s=30,
+                    ec='black')
+        plt.plot(df['pos'], df[metric], linewidth=1)
+        plt.colorbar()
+        plt.xlabel('Chr' + str(chr) + ':' + str(s) + '-' + str(e))
+        plt.ylabel(metric)
+        plt.show()
+        if title is not None:
+            plt.title(title)
+
+        save_figure(save_fig, outdir, save_name)
+    return df[metric].mean()
