@@ -30,7 +30,7 @@ __all__ = [
     "calculate_v_imputation_accuracy", "average_v_metrics",
     "generate_v_impacc", "calculate_weighted_average", "average_impacc_by_chr",
     "round_to_nearest_magnitude", "calculate_imputation_summary_metrics",
-    "calculate_imputation_sumstats", "calculate_shannon_entropy", "calculate_hla_concordance", "generate_hla_imputation_report"
+    "calculate_imputation_sumstats", "calculate_shannon_entropy", "calculate_hla_concordance", "generate_hla_imputation_report", "calculate_hla_entropy"
 ]
 
 # To clean
@@ -464,3 +464,18 @@ def generate_hla_imputation_report(df, source, loci = HLA_GENES):
         report.loc[len(report)] = [l, ccd[0], 'One field', source]
         report.loc[len(report)] = [l, ccd[1], 'Two field', source]
     return report
+
+def calculate_hla_entropy(hla_alleles_df):
+    entropy = []
+    n_allele = []
+    n_ambiguous = []
+    for i in HLA_GENES:
+        tmp = hla_alleles_df[hla_alleles_df['Locus'] == i]
+        n_allele.append(len(tmp['Allele'].unique()))
+        entropy.append(calculate_shannon_entropy(tmp['Allele'].values))
+        n_ambiguous.append(len(tmp[tmp['Allele'].str.contains('/')]))
+
+    summary = pd.DataFrame({'Gene': HLA_GENES, 'Shannon Entropy': entropy, 
+                            'Number of distinct alleles': n_allele,
+                           'Number of ambiguous type from SBT': n_ambiguous})
+    return summary

@@ -30,7 +30,7 @@ from .save import *
 from .read import *
 from .variables import *
 
-__all__ = ["aggregate_r2", "extract_hla_type", "convert_indel", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs", "imputation_calculation_preprocess"]
+__all__ = ["aggregate_r2", "extract_hla_type", "convert_indel", "subtract_bed_by_chr", "multi_subtract_bed", "filter_afs", "imputation_calculation_preprocess", "gather_hla_alleles"]
 
 def aggregate_r2(df):
     tmp = df.copy().groupby(['AF', 'panel'])['corr'].mean().reset_index()
@@ -257,3 +257,10 @@ def imputation_calculation_preprocess(
     chip = chip.drop(columns=drop_cols)
 
     return chip, lc, af
+
+# This converts HLA direct sequencing results to two-field allelic format
+def gather_hla_alleles(hla):
+    result = hla.melt(id_vars=['Locus'], value_vars=['Two field1', 'Two field2'], var_name='variable', value_name='Two field').drop(columns=['variable'])
+    result['Allele'] = result['Locus'] + '*' + result['Two field']
+    result = result.drop(columns = 'Two field')
+    return result

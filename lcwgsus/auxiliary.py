@@ -40,7 +40,7 @@ __all__ = ["get_mem", "check_outdir", "generate_af_axis",
            "extract_DS", "extract_format", "drop_cols",
            "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP", "get_rl_distribution",
            "extract_LDS", "extract_LDS_to_DS", "reorder_cols",
-           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "compare_hla_types", "clean_hla",  "check_one_field_match", "check_two_field_match", "compare_hla_types"]
+           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "compare_hla_types", "clean_hla",  "check_one_field_match", "check_two_field_match", "compare_hla_types", "group_top_n_alleles"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -485,3 +485,9 @@ def compare_hla_types(typed, imputed):
         typed = check_one_field_match(typed, imputed, ix)
         typed = check_two_field_match(typed, imputed, ix)   
     return typed
+
+def group_top_n_alleles(series, n=5):
+    top_n = series.nlargest(n)
+    rest = series[~series.index.isin(top_n.index)].sum()
+    top_n['Others'] = rest
+    return top_n

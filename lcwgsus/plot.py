@@ -27,10 +27,11 @@ pd.options.mode.chained_assignment = None
 from .auxiliary import *
 from .calculate import *
 from .variables import *
+from .process import *
 
 __all__ = [
     "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw",
-    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region"
+    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region", "plot_hla_diversity"
 ]
 
 def save_figure(save: bool, outdir: str, name: str) -> None:
@@ -411,3 +412,40 @@ def plot_imputation_metric_in_region(
 
         save_figure(save_fig, outdir, save_name)
     return df[metric].mean()
+
+def plot_hla_diversity(hla_alleles_df):
+    hla_counts = hla_alleles_df.groupby(['Locus', 'Allele']).size().unstack(fill_value=0)
+
+    top_hla_counts = hla_counts.apply(group_top_n_alleles, axis=1)
+    lst = []
+    for i in HLA_GENES:
+        cols = top_hla_counts.columns[top_hla_counts.columns.str.startswith(i + '*')]
+        tmp = top_hla_counts[cols]
+        sorted_columns = tmp.loc[i].sort_values(ascending = True).index
+        sorted_df = tmp[sorted_columns]
+
+        lst.append(sorted_df)
+    res = pd.concat(lst, axis = 1)
+    res['Others'] = top_hla_counts['Others']
+    cols = ['Others'] + [col for col in res.columns if col != 'Others']
+    res = res[cols]
+
+    cumulative_sums = res.cumsum(axis=1)
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    for idx, col in enumerate(res.columns):
+        ax.bar(res.index, res[col], bottom=res.iloc[:, :idx].sum(axis=1))
+
+        for category in res.index:
+            height = res.loc[category, col]
+            if height > 0:
+                bottom = cumulative_sums.loc[category, col] - height
+                ax.text(x=category, y=bottom + height / 2, s=col, ha='center', va='center', fontsize=8, color='white')
+
+    ax.set_xlabel('HLA gene')
+    ax.set_ylabel('Frequency')
+    ax.set_title('HLA allelic diversity for 250 people')
+
+    plt.show()
+    return None
