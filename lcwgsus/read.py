@@ -276,7 +276,7 @@ def read_hla_chip_imputation_results(vcf, retain = 'fv'):
         vcf[i] = vcf[i].apply(encode_hla)
         
     vcf = vcf.drop(columns = COMMON_COLS + ['QUAL', 'FILTER', 'INFO', 'FORMAT'])
-    vcf[:, 'Locus'] = vcf['ID'].str.split('*').str.get(0).str.split('_').str.get(1)
+    vcf['Locus'] = vcf['ID'].str.split('*').str.get(0).str.split('_').str.get(1)
     vcf['ID'] = vcf['ID'].str.split('*').str.get(1)
     vcf = vcf[vcf['Locus'].isin(HLA_GENES)]
     vcf = vcf[['Locus', 'ID'] + samples].reset_index(drop = True)
