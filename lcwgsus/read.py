@@ -179,3 +179,4 @@ def read_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE):
     hla = hla.sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
     hla = pd.concat([hla.iloc[::2].reset_index(drop=True), hla.iloc[1::2, 2:].reset_index(drop=True)], axis=1)
     hla.columns = ['SampleID', 'Locus', 'One field1', 'Two field1', 'One field2', 'Two field2']
+    return hla
