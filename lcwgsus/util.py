@@ -30,10 +30,11 @@ from .process import *
 from .read import *
 from .plot import *
 from .variables import *
+from .calculate import *
 
 __all__ = [
     "visualise_single_variant", "visualise_single_variant_v2",
-    "get_badly_imputed_regions", "get_n_variants_vcf", "get_n_variants_impacc", "calculate_bqsr_error_rate"
+    "get_badly_imputed_regions", "get_n_variants_vcf", "get_n_variants_impacc", "calculate_bqsr_error_rate", "calculate_hla_imputation_accuracy"
 ]
 
 
@@ -212,3 +213,21 @@ def calculate_bqsr_error_rate(indir, subset_samples = None, positions = ['-1', '
         tmp = errors[errors['CovariateValue'] == i]
         mean_error[i] = tmp['prob'].mean()
     return mean_error
+
+def calculate_hla_imputation_accuracy(indir, hla, label, combined = True, retain = 'fv'):
+    if indir[-1] == '/':
+        source = 'lc'
+    else:
+        source = 'chip'
+        
+    if source == 'lc':
+        imputed = read_hla_lc_imputation_results(indir, combined, retain)
+    elif source == 'chip':
+        imputed = read_hla_chip_imputation_results(indir, retain)
+    else:
+        print('Invalid source input.')
+        return None
+    
+    compared = compare_hla_types(hla, imputed)
+    hla_report = generate_hla_imputation_report(compared, label)
+    return hla_report

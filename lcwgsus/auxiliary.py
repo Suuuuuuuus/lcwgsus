@@ -479,6 +479,9 @@ def check_two_field_match(typed, imputed, ix):
 
 def compare_hla_types(typed, imputed):
     typed = typed.copy()
+    samples = imputed['SampleID'].unique()
+    typed = typed[typed['SampleID'].isin(samples)].sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
+    
     typed['One field match'] = 0
     typed['Two field match'] = 0
     for ix in range(len(typed)):

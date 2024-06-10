@@ -190,7 +190,12 @@ def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all'
         pass
     return hla
 
-def read_hla_lc_imputation_results(indir, batch = False, combined = True, retain = 'fv'):
+def read_hla_lc_imputation_results(indir, combined = True, retain = 'fv'):
+    if 'batch' in indir:
+        batch = True
+    else:
+        batch = False
+
     if retain == 'fv':
         retained_samples = read_tsv_as_lst('data/sample_tsvs/fv_idt_names.tsv')
     elif retain == 'mini':
