@@ -26,7 +26,7 @@ pd.options.mode.chained_assignment = None
 from .auxiliary import *
 from .variables import *
 
-__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af", "read_direct_sequencing"]
+__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af", "read_hla_direct_sequencing"]
 
 def read_metadata(file, filetype = 'gzip', comment = '#', new_cols = None):
     if filetype == 'gzip':
@@ -156,7 +156,7 @@ def multi_read_af(chromosomes, files, combine = True):
     else:
         return res_lst
 
-def read_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE):
+def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all'):
     hla = pd.read_csv(file)
     hla = hla[['SampleID', 'Locus', 'Included Alleles', 'G code']]
     hla = hla[hla['Locus'].isin(HLA_GENES)].reset_index(drop = True)
@@ -179,4 +179,13 @@ def read_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE):
     hla = hla.sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
     hla = pd.concat([hla.iloc[::2].reset_index(drop=True), hla.iloc[1::2, 2:].reset_index(drop=True)], axis=1)
     hla.columns = ['SampleID', 'Locus', 'One field1', 'Two field1', 'One field2', 'Two field2']
+
+    if retain == 'fv':
+        fv_samples = read_tsv_as_lst('data/metadata/sample_tsvs/fv_gam_names.tsv')
+        hla = hla[hla['SampleID'].isin(fv_samples)].reset_index(drop = True)
+    elif retain == 'mini':
+        mini_samples = read_tsv_as_lst('data/metadata/sample_tsvs/mini_gam_names.tsv')
+        hla = hla[hla['SampleID'].isin(mini_samples)].reset_index(drop = True)
+    else:
+        pass
     return hla
