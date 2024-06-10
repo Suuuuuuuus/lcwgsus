@@ -26,7 +26,7 @@ pd.options.mode.chained_assignment = None
 from .auxiliary import *
 from .variables import *
 
-__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af"]
+__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af", "read_direct_sequencing"]
 
 def read_metadata(file, filetype = 'gzip', comment = '#', new_cols = None):
     if filetype == 'gzip':
@@ -155,3 +155,27 @@ def multi_read_af(chromosomes, files, combine = True):
         return combine_df(res_lst)
     else:
         return res_lst
+
+def read_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE):
+    hla = pd.read_csv(file)
+    hla = hla[['SampleID', 'Locus', 'Included Alleles', 'G code']]
+    hla = hla[hla['Locus'].isin(HLA_GENES)].reset_index(drop = True)
+    hla['One field1'] = ''
+    hla['Two field1'] = ''
+
+    hla = hla.apply(resolve_ambiguous_hla_type, axis = 1)
+    hla = hla.drop(columns = ['Included Alleles', 'G code'])
+
+    for s in hla['SampleID'].unique():
+        tmps = hla[hla['SampleID'] == s]
+        for l in HLA_GENES:
+            tmpl = tmps[tmps['Locus'] == l]
+            repeat = 2 - tmpl.shape[0]
+            if repeat == 2:
+                hla.loc[len(hla)] = [s, l, '-9', '-9']
+                hla.loc[len(hla)] = [s, l, '-9', '-9']
+            if repeat == 1:
+                hla.loc[len(hla)] = [s, l, tmpl.iloc[0,2], tmpl.iloc[0, 3]]
+    hla = hla.sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
+    hla = pd.concat([hla.iloc[::2].reset_index(drop=True), hla.iloc[1::2, 2:].reset_index(drop=True)], axis=1)
+    hla.columns = ['SampleID', 'Locus', 'One field1', 'Two field1', 'One field2', 'Two field2']

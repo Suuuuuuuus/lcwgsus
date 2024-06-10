@@ -1,5 +1,6 @@
 import io
 import os
+import re
 import sys
 import csv
 import gzip
@@ -39,7 +40,7 @@ __all__ = ["get_mem", "check_outdir", "generate_af_axis",
            "extract_DS", "extract_format", "drop_cols",
            "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP", "get_rl_distribution",
            "extract_LDS", "extract_LDS_to_DS", "reorder_cols",
-           "convert_to_violin", "combine_violins", "bcftools_get_samples"]
+           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "compare_hla_types", "clean_hla",  "check_one_field_match", "check_two_field_match", "compare_hla_types"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -412,3 +413,75 @@ def get_rl_distribution(file):
     rls = subprocess.run(command, shell = True, capture_output = True, text = True).stdout[:-1].split('\n')
     rls = [int(i) for i in rls]
     return rls
+
+def remove_superscripts(s):
+    pattern = r'[:X\d]'
+    matches = re.findall(pattern, s)
+    result = ''.join(matches)
+    return result
+
+def resolve_ambiguous_hla_type(r):
+    if pd.isna(r['Included Alleles']):
+        r['Included Alleles'] = remove_superscripts(r['G code'])
+    alleles = r['Included Alleles'].split('/')
+    one_field = list(set([":".join(i.split(':', 1)[:1]) for i in alleles]))
+    two_field = list(set([":".join(i.split(':', 2)[:2]) for i in alleles]))
+    r['One field1'] =  '/'.join(one_field)
+    r['Two field1'] = '/'.join(two_field)
+    return r
+
+def check_letter(s):
+    for c in s:
+        if c.isalpha():
+            return True
+
+def check_column(s):
+    if ':' in s:
+        return True
+
+def clean_hla(r, locis = HLA_LOCI):
+    for i in locis:
+        allele = r[i]
+        if check_letter(allele) or not check_column(allele):
+            r[i] = '-9'
+        else:
+            r[i] = ":".join(allele.split(':', 2)[:2])
+    return r
+
+def compare_hla_types(r):
+    typed = set(r[['A1', 'A2']])
+    imputed = set(r[['bestallele1', 'bestallele2']])
+    if typed == imputed:
+        r['match'] = 2
+    else:
+        r['match'] = len(typed.intersection(imputed))
+    return r
+
+def check_one_field_match(typed, imputed, ix):
+    colnames = ['One field1', 'One field2']
+    typedalleles = set(typed.loc[ix, colnames])
+    imputedalleles = set(imputed.loc[ix, colnames])
+    if typedalleles == imputedalleles:
+        typed.loc[ix, 'One field match'] = 2
+    else:
+        typed.loc[ix, 'One field match'] = len(typedalleles.intersection(imputedalleles))
+    return typed
+
+def check_two_field_match(typed, imputed, ix):
+    colnames = ['Two field1', 'Two field2']
+    typedallele1 = typed.loc[ix, 'Two field1'].split('/')
+    typedallele2 = typed.loc[ix, 'Two field2'].split('/')
+    imputedallele1 = imputed.loc[ix, 'Two field1']
+    imputedallele2 = imputed.loc[ix, 'Two field2']
+    
+    typed.loc[ix, 'Two field match'] = max(np.sum((imputedallele1 in typedallele1) + (imputedallele2 in typedallele2)), np.sum((imputedallele2 in typedallele1) + (imputedallele1 in typedallele2)))
+    return typed
+
+def compare_hla_types(typed, imputed):
+    typed = typed.copy()
+    typed['One field match'] = 0
+    typed['Two field match'] = 0
+    for ix in range(len(typed)):
+        typed = check_one_field_match(typed, imputed, ix)
+        typed = check_two_field_match(typed, imputed, ix)   
+    return typed

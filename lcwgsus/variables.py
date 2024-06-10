@@ -64,3 +64,5 @@ ETHNICITIES = ['fula', 'jola', 'mandinka', 'wollof']
 
 HLA_GENES = ['A', 'B', 'C', 'DQB1', 'DRB1']
 HLA_LOCI = [i+'1' for i in HLA_GENES] + [i+'2' for i in HLA_GENES]
+
+HLA_DIRECT_SEQUENCING_FILE = '/well/band/users/rbx225/GAMCC/data/hla_direct_sequencing/HLA_direct_sequencing_all.csv'

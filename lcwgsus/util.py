@@ -3,6 +3,7 @@ import os
 import sys
 import csv
 import gzip
+import glob
 import time
 import random
 import secrets
@@ -32,7 +33,7 @@ from .variables import *
 
 __all__ = [
     "visualise_single_variant", "visualise_single_variant_v2",
-    "get_badly_imputed_regions", "get_n_variants_vcf", "get_n_variants_impacc"
+    "get_badly_imputed_regions", "get_n_variants_vcf", "get_n_variants_impacc", "calculate_bqsr_error_rate"
 ]
 
 
@@ -162,3 +163,52 @@ def get_n_variants_impacc(impacc, colname):
     else:
         print('Invalid input types. It has to be a str of an impacc file or a list of impacc files.')
         return -9
+
+def calculate_bqsr_error_rate(indir, subset_samples = None, positions = ['-1', '-151', '1', '151']):
+    pattern = indir + '*.report'
+    target_line = '#:GATKTable:RecalTable2:'
+    dfs = []
+    paths = glob.glob(pattern)
+
+    for file_path in paths:
+        file_name = file_path.split('/')[-1].split('.')[0]
+
+        start_reading = False
+        data_lines = []
+
+        with open(file_path, 'r') as file:
+            for line in file:
+                line = line.strip()
+                if start_reading:
+                    data_lines.append(line)
+                if line == target_line:
+                    start_reading = True
+
+        data = "\n".join(data_lines)
+        data = re.sub(r'\n', '+++', data)
+        data = re.sub(r'\s+', ' ', data)
+        data = re.sub(r'\+\+\+', r'\n', data)
+        data = io.StringIO(data)
+
+        df = pd.read_csv(data, sep = ' ').drop(columns = ['QualityScore', 'ReadGroup', 'CovariateName', 'EventType', 'EmpiricalQuality'])
+        df['sample'] = file_name
+        dfs.append(df)
+
+    subsets = []
+    if subset_samples is not None:
+        for df in dfs:
+            if df.loc[0, 'sample'] in subset_samples:
+                subsets.append(df)
+        dfs = subsets
+    error_ary = []
+    for i, df in enumerate(dfs):
+        df = df[df['CovariateValue'].isin(positions)]
+        error = df.groupby('CovariateValue').sum().reset_index()
+        error['prob'] = error['Errors']/error['Observations']
+        error_ary.append(error)
+    errors = pd.concat(error_ary).reset_index(drop = True)
+    mean_error = {}
+    for i in positions:
+        tmp = errors[errors['CovariateValue'] == i]
+        mean_error[i] = tmp['prob'].mean()
+    return mean_error

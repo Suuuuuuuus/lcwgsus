@@ -30,7 +30,7 @@ __all__ = [
     "calculate_v_imputation_accuracy", "average_v_metrics",
     "generate_v_impacc", "calculate_weighted_average", "average_impacc_by_chr",
     "round_to_nearest_magnitude", "calculate_imputation_summary_metrics",
-    "calculate_imputation_sumstats", "calculate_shannon_entropy"
+    "calculate_imputation_sumstats", "calculate_shannon_entropy", "calculate_hla_concordance", "generate_hla_imputation_report"
 ]
 
 # To clean
@@ -450,3 +450,17 @@ def calculate_shannon_entropy(str_lst):
     proportions = np.array(list(counts.values())) / total_count
     shannon_index = -np.sum(proportions * np.log(proportions))
     return shannon_index
+
+def calculate_hla_concordance(df):
+    ccd_one = df['One field match'].sum()/(df.shape[0]*2)
+    ccd_two = df['Two field match'].sum()/(df.shape[0]*2)
+    return [ccd_one, ccd_two]
+
+def generate_hla_imputation_report(df, source, loci = HLA_GENES):
+    report = pd.DataFrame(columns = ['Locus', 'Concordance', 'Resolution', 'Source'])
+    for l in loci:
+        tmp = df[df['Locus'] == l]
+        ccd = calculate_hla_concordance(tmp)
+        report.loc[len(report)] = [l, ccd[0], 'One field', source]
+        report.loc[len(report)] = [l, ccd[1], 'Two field', source]
+    return report
