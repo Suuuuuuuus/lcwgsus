@@ -40,7 +40,7 @@ __all__ = ["get_mem", "check_outdir", "generate_af_axis",
            "extract_DS", "extract_format", "drop_cols",
            "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP", "get_rl_distribution",
            "extract_LDS", "extract_LDS_to_DS", "reorder_cols",
-           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "compare_hla_types", "clean_hla",  "check_one_field_match", "check_two_field_match", "compare_hla_types", "group_top_n_alleles"]
+           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "compare_hla_types", "clean_hla",  "check_one_field_match", "check_two_field_match", "compare_hla_types", "group_top_n_alleles", "extract_hla_vcf_alleles_one_sample"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -491,3 +491,28 @@ def group_top_n_alleles(series, n=5):
     rest = series[~series.index.isin(top_n.index)].sum()
     top_n['Others'] = rest
     return top_n
+
+def extract_hla_vcf_alleles_one_sample(vcf, df, s, resolution):
+    if resolution == 1:
+        prefix = 'One '
+    elif resolution == 2:
+        prefix = 'Two '
+    elif resolution == 3:
+        prefix = 'Three '
+    else:
+        return vcf
+    
+    field = vcf[vcf['ID'].str.split(':').str.len() == resolution].reset_index(drop = True)
+    for i in range(len(field.index)):
+        l = field.loc[i, 'Locus']
+        ID = field.loc[i, 'ID']
+        dosage = field.loc[i, s]
+        if dosage == 2:
+            df.loc[(s, l), prefix + 'field1'] = ID
+            df.loc[(s, l), prefix + 'field2'] = ID
+        else:
+            if df.loc[(s, l), prefix + 'field1'] == '-9':
+                df.loc[(s, l), prefix + 'field1'] = ID
+            else:
+                df.loc[(s, l), prefix + 'field2'] = ID
+    return df

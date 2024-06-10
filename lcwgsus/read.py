@@ -26,7 +26,7 @@ pd.options.mode.chained_assignment = None
 from .auxiliary import *
 from .variables import *
 
-__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af", "read_hla_direct_sequencing"]
+__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af", "read_hla_direct_sequencing", "read_hla_lc_imputation_results", "read_hla_chip_imputation_results"]
 
 def read_metadata(file, filetype = 'gzip', comment = '#', new_cols = None):
     if filetype == 'gzip':
@@ -189,3 +189,111 @@ def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all'
     else:
         pass
     return hla
+
+def read_hla_lc_imputation_results(indir, batch = False, combined = True, retain = 'fv'):
+    if retain == 'fv':
+        retained_samples = read_tsv_as_lst('data/sample_tsvs/fv_idt_names.tsv')
+    elif retain == 'mini':
+        retained_samples = read_tsv_as_lst('data/sample_tsvs/mini_idt_names.tsv')
+    else:
+        retained_samples = read_tsv_as_lst('data/sample_tsvs/samples_lc.tsv')
+        
+    sample_linker = pd.read_csv(SAMPLE_LINKER_FILE)
+    sample_linker = sample_linker[sample_linker['Seq_Name'].isin(retained_samples)]
+    sample_linker = {k:v for k, v in zip(sample_linker['Seq_Name'], sample_linker['Chip_Name'])}
+    
+    imputed_lst = []
+    for g in HLA_GENES:
+        if not batch:
+            if combined:
+                imputed = pd.read_csv(indir + g + '/quilt.hla.output.combined.topresult.txt', sep = '\t')
+            else:
+                imputed = pd.read_csv(indir + g + '/quilt.hla.output.onlystates.topresult.txt', sep = '\t')
+        else:
+            subdirs = os.listdir(indir)
+            imputed_ary = []
+            for d in subdirs:
+                if combined:
+                    imputed_ary.append(pd.read_csv(indir + d + '/' + g + '/quilt.hla.output.combined.topresult.txt', sep = '\t'))
+                else:
+                    imputed_ary.append(pd.read_csv(indir + d + '/' + g + '/quilt.hla.output.onlystates.topresult.txt', sep = '\t'))
+            imputed = pd.concat(imputed_ary)
+            
+        imputed = imputed[['sample_name', 'bestallele1', 'bestallele2', 'post_prob']]
+        imputed['Locus'] = g
+        imputed.columns = ['SampleID', 'Two field1', 'Two field2', 'prob', 'Locus']
+        imputed = imputed[imputed['SampleID'].isin(retained_samples)]
+        imputed['SampleID'] = imputed['SampleID'].apply(lambda x: sample_linker[x])
+        
+        imputed['One field1'] = imputed['Two field1'].str.split('*').str.get(1).str.split(':').str.get(0)
+        imputed['One field2'] = imputed['Two field2'].str.split('*').str.get(1).str.split(':').str.get(0)
+        imputed['Two field1'] = imputed['Two field1'].str.split('*').str.get(1)
+        imputed['Two field2'] = imputed['Two field2'].str.split('*').str.get(1)
+
+        imputed_lst.append(imputed)
+        
+    imputed = pd.concat(imputed_lst).sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
+    imputed = imputed[['SampleID', 'Locus', 'One field1', 'Two field1', 'One field2', 'Two field2', 'prob']]
+    return imputed
+
+def read_hla_chip_imputation_results(vcf, retain = 'fv'):
+    source = vcf.split('/')[-2].split('_')[0]
+    if source == 'lc':
+        if retain == 'fv':
+            retained_samples = read_tsv_as_lst('data/sample_tsvs/fv_gm_names.tsv')
+        elif retain == 'mini':
+            retained_samples = read_tsv_as_lst('data/sample_tsvs/mini_gm_names.tsv')
+        else:
+            retained_samples = read_tsv_as_lst('data/sample_tsvs/fv_gm_names.tsv') + read_tsv_as_lst('data/sample_tsvs/mini_gm_names.tsv')
+    elif source == 'chip':
+        if retain == 'fv':
+            retained_samples = read_tsv_as_lst('data/sample_tsvs/fv_gam_names.tsv')
+        elif retain == 'mini':
+            retained_samples = read_tsv_as_lst('data/sample_tsvs/mini_gam_names.tsv')
+        else:
+            retained_samples = read_tsv_as_lst('data/sample_tsvs/fv_gam_names.tsv') + read_tsv_as_lst('data/sample_tsvs/mini_gam_names.tsv')
+    else:
+        print('Invalid source input.')
+        return None
+    
+    sample_linker = pd.read_csv(SAMPLE_LINKER_FILE)
+    sample_linker = sample_linker[sample_linker['Sample_Name'].isin(retained_samples)]
+    sample_linker = {k:v for k, v in zip(sample_linker['Sample_Name'], sample_linker['Chip_Name'])}
+    
+    vcf = read_vcf(vcf)
+    vcf = vcf[vcf['ID'].str.contains('HLA')]
+    vcf = vcf[VCF_COLS + list(vcf.columns[vcf.columns.isin(retained_samples)])]
+
+    if source == 'lc':
+        names = vcf.columns[vcf.columns.str.contains(LC_SAMPLE_PREFIX)]
+        chip_names = []
+        for i in names:
+            chip_names.append(sample_linker[i])
+        vcf.columns = VCF_COLS + chip_names
+
+    samples = list(vcf.columns[9:])
+    for i in samples:
+        vcf[i] = vcf[i].apply(encode_hla)
+        
+    vcf = vcf.drop(columns = COMMON_COLS + ['QUAL', 'FILTER', 'INFO', 'FORMAT'])
+    vcf['Locus'] = vcf['ID'].str.split('*').str.get(0).str.split('_').str.get(1)
+    vcf['ID'] = vcf['ID'].str.split('*').str.get(1)
+    vcf = vcf[vcf['Locus'].isin(HLA_GENES)]
+    vcf = vcf[['Locus', 'ID'] + samples].reset_index(drop = True)
+
+    combinations = list(itertools.product(samples, HLA_GENES))
+    df = pd.DataFrame(combinations, columns=['SampleID', 'Locus'])
+    df['One field1'] = '-9'
+    df['Two field1'] = '-9'
+    df['One field2'] = '-9'
+    df['Two field2'] = '-9'
+
+    df = df.set_index(['SampleID', 'Locus'])
+
+    for s in samples:
+        tmp = vcf[vcf[s] != 0][['Locus', 'ID', s]]
+        df = extract_hla_vcf_alleles_one_sample(tmp, df, s, 1)
+        df = extract_hla_vcf_alleles_one_sample(tmp, df, s, 2)
+
+    df = df.reset_index().sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
+    return df
