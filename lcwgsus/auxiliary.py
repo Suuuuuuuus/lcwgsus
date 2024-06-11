@@ -67,7 +67,7 @@ def generate_af_axis(x=MAF_ARY):
         for i in x * 100
     ]
     y = x[:-1]
-    res_ary = list(x[0])
+    res_ary = [x[0]]
     shift = x[1:]
     combine = res_ary + [i + '-' + j for i, j in zip(y, shift)]
     return combine
