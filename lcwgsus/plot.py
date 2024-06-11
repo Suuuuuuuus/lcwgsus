@@ -406,9 +406,8 @@ def plot_imputation_metric_in_region(
         plt.colorbar()
         plt.xlabel('Chr' + str(chr) + ':' + str(s) + '-' + str(e))
         plt.ylabel(metric)
+        plt.title(title)
         plt.show()
-        if title is not None:
-            plt.title(title)
 
         save_figure(save_fig, outdir, save_name)
     return df[metric].mean()
