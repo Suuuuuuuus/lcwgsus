@@ -40,7 +40,7 @@ __all__ = ["get_mem", "check_outdir", "generate_af_axis",
            "extract_DS", "extract_format", "drop_cols",
            "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP", "get_rl_distribution",
            "extract_LDS", "extract_LDS_to_DS", "reorder_cols",
-           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "compare_hla_types", "clean_hla",  "check_one_field_match", "check_two_field_match", "compare_hla_types", "group_top_n_alleles", "extract_hla_vcf_alleles_one_sample"]
+           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "clean_hla",  "check_one_field_match", "check_two_field_match", "compare_hla_types", "group_top_n_alleles", "extract_hla_vcf_alleles_one_sample"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -448,15 +448,6 @@ def clean_hla(r, locis = HLA_LOCI):
             r[i] = ":".join(allele.split(':', 2)[:2])
     return r
 
-def compare_hla_types(r):
-    typed = set(r[['A1', 'A2']])
-    imputed = set(r[['bestallele1', 'bestallele2']])
-    if typed == imputed:
-        r['match'] = 2
-    else:
-        r['match'] = len(typed.intersection(imputed))
-    return r
-
 def check_one_field_match(typed, imputed, ix):
     colnames = ['One field1', 'One field2']
     typedalleles = set(typed.loc[ix, colnames])
@@ -478,7 +469,9 @@ def check_two_field_match(typed, imputed, ix):
     return typed
 
 def compare_hla_types(typed, imputed):
-    typed = typed.copy()
+    typed = typed.copy().sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
+    imputed = imputed.copy().sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
+
     samples = imputed['SampleID'].unique()
     typed = typed[typed['SampleID'].isin(samples)].sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
     

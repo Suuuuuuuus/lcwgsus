@@ -127,3 +127,12 @@ def plot_imputation_accuracy_deprecated(r2, single_sample = True, aggregate = Tr
     if save_fig:
         plt.savefig(outdir + save_name, bbox_inches = "tight", dpi=300)
     return None
+
+def compare_hla_types(r):
+    typed = set(r[['A1', 'A2']])
+    imputed = set(r[['bestallele1', 'bestallele2']])
+    if typed == imputed:
+        r['match'] = 2
+    else:
+        r['match'] = len(typed.intersection(imputed))
+    return r
