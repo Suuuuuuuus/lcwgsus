@@ -255,9 +255,9 @@ def calculate_v_imputation_accuracy(chip,
                 tmp_chip = chip[chip_af['MAF'] == 0]
                 tmp_lc = lc_af[lc_af['MAF'] == 0]
             else:
-                tmp_chip = chip[(MAF_ary[i] > chip['MAF'])
+                tmp_chip = chip[(MAF_ary[i] >= chip['MAF'])
                                 & (chip['MAF'] > MAF_ary[i - 1])]
-                tmp_lc = lc[(MAF_ary[i] > lc['MAF'])
+                tmp_lc = lc[(MAF_ary[i] >= lc['MAF'])
                             & (lc['MAF'] > MAF_ary[i - 1])]
 
             r1 = np.array(tmp_chip[chip_sample].values).astype(float)
