@@ -202,7 +202,7 @@ def intersect_dfs(lst: List[pd.DataFrame], common_cols: List[str] = COMMON_COLS)
         common_indices = common_indices.intersection(lst[i].set_index(common_cols).index)
 
     for i in range(len(lst)):
-        lst[i] = lst[i].set_index(common_cols).loc[common_indices].reset_index()
+        lst[i] = lst[i].set_index(common_cols).loc[common_indices].reset_index().drop_duplicates(subset = common_cols)
     return lst
 
 def find_matching_samples(chip_samples, rename_map, lc='chip'):
