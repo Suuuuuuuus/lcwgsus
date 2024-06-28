@@ -383,7 +383,8 @@ def plot_imputation_metric_in_region(
         show_fig=True,
         save_fig=False,
         outdir=None,
-        save_name=None):
+        save_name=None,
+        ax=None):  
     h = h[h['chr'] == chr]
     h = h[h[metric] != -9]
     if start is not None:
@@ -394,22 +395,32 @@ def plot_imputation_metric_in_region(
         e = pos + window / 2
 
     df = h[(h['pos'] < e) & (h['pos'] > s)]
+    scale = max(0, (len(str(e - s)) - 2))
+    buffer = (10**scale)
 
-    if show_fig:
-        plt.scatter(df['pos'],
-                    df[metric],
-                    c=df['MAF'],
-                    cmap='GnBu',
-                    s=30,
-                    ec='black')
-        plt.plot(df['pos'], df[metric], linewidth=1)
-        plt.colorbar()
-        plt.xlabel('Chr' + str(chr) + ':' + str(s) + '-' + str(e))
-        plt.ylabel(metric)
-        plt.title(title)
-        plt.show()
+    if show_fig & (len(df) != 0):
+        if ax is None:
+            ax = plt.gca()
+        ax.scatter(df['pos'],
+                   df[metric],
+                   c=df['MAF'],
+                   cmap='GnBu',
+                   s=30,
+                   ec='black')
+        ax.plot(df['pos'], df[metric], linewidth=1)
+        ax.grid()
+        formatter = ticker.ScalarFormatter(useOffset=False)
+        formatter.set_scientific(False)
 
-        save_figure(save_fig, outdir, save_name)
+        ax.set_xticks(np.linspace(max(-10, s - buffer), e + buffer, num = 11))
+        label_format = '{:,.0f}'
+        ax.set_xticklabels([label_format.format(x) for x in ax.get_xticks().tolist()], rotation = 45)
+        ax.set_xlim((max(-10, s - buffer), e + buffer))
+        ax.set_ylim((-0.05, 1.05))
+        plt.colorbar(ax.collections[0], ax=ax) 
+        ax.set_xlabel('Chr' + str(chr) + ':' + str(s) + '-' + str(e))
+        ax.set_ylabel(metric)
+        ax.set_title(title)
     return df[metric].mean()
 
 def plot_hla_diversity(hla_alleles_df):
