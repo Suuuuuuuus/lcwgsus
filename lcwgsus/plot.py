@@ -418,6 +418,8 @@ def plot_imputation_metric_in_region(
         ax.set_xlabel('chr' + str(chr) + ':' + str(s) + '-' + str(e))
         ax.set_ylabel(metric)
         ax.set_title(title)
+        
+        save_figure(save_fig, outdir, save_name)
     return df[metric].mean()
 
 def plot_hla_diversity(hla_alleles_df):
