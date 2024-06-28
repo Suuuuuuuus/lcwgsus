@@ -409,16 +409,13 @@ def plot_imputation_metric_in_region(
                    ec='black')
         ax.plot(df['pos'], df[metric], linewidth=1)
         ax.grid()
-        formatter = ticker.ScalarFormatter(useOffset=False)
-        formatter.set_scientific(False)
-
         ax.set_xticks(np.linspace(max(-10, s - buffer), e + buffer, num = 11))
         label_format = '{:,.0f}'
         ax.set_xticklabels([label_format.format(x) for x in ax.get_xticks().tolist()], rotation = 45)
         ax.set_xlim((max(-10, s - buffer), e + buffer))
         ax.set_ylim((-0.05, 1.05))
         plt.colorbar(ax.collections[0], ax=ax) 
-        ax.set_xlabel('Chr' + str(chr) + ':' + str(s) + '-' + str(e))
+        ax.set_xlabel('chr' + str(chr) + ':' + str(s) + '-' + str(e))
         ax.set_ylabel(metric)
         ax.set_title(title)
     return df[metric].mean()
