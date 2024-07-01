@@ -31,7 +31,7 @@ from .process import *
 
 __all__ = [
     "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw",
-    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region", "plot_hla_diversity", "plot_HLA_allele_frequency"
+    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region", "plot_hla_diversity", "plot_hla_allele_frequency"
 ]
 
 def save_figure(save: bool, outdir: str, name: str) -> None:
@@ -459,7 +459,7 @@ def plot_hla_diversity(hla_alleles_df):
     plt.show()
     return None
 
-def plot_HLA_allele_frequency(hla_alleles_df, gene):
+def plot_hla_allele_frequency(hla_alleles_df, gene):
     tmp = hla_alleles_df[hla_alleles_df['Locus'] == gene]
     counts = tmp['Allele'].value_counts()
     sns.set(style="whitegrid")
