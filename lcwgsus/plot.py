@@ -261,7 +261,11 @@ def plot_imputation_accuracy_typed(impacc_lst,
 
         plt.xlabel('GnomAD allele frequencies (%)')
         plt.title(title)
-        plt.legend()
+        ax.legend(
+            bbox_to_anchor=(0.65, 0.75),
+            framealpha=1,
+            prop={'size': 9}
+        )
         plt.ylabel('Aggregated imputation accuracy ($r^2$)')
 
     ax.grid()
@@ -329,7 +333,11 @@ def plot_imputation_accuracy_gw(impacc_lst,
 
         plt.xlabel('GnomAD allele frequencies (%)')
         plt.title(title)
-        plt.legend()
+        ax.legend(
+            bbox_to_anchor=(0.65, 0.75),
+            framealpha=1,
+            prop={'size': 9}
+        )
         plt.ylabel('Aggregated imputation accuracy ($r^2$)')
     ax.grid()
     fig.tight_layout()
@@ -407,7 +415,11 @@ def plot_imputation_accuracy_by_genotype(impacc,
 
         plt.xlabel('GnomAD allele frequencies (%)')
         plt.title(title)
-        plt.legend()
+        ax.legend(
+            bbox_to_anchor=(0.65, 0.75),
+            framealpha=1,
+            prop={'size': 9}
+        )
         plt.ylabel('Average concordance')
 
     ax.grid()
