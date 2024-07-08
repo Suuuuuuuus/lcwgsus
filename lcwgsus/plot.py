@@ -31,7 +31,7 @@ from .variables import *
 from .process import *
 
 __all__ = [
-    "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw", "plot_imputation_accuracy_by_genotype",  "combine_imputation_accuracy_plots",
+    "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw", "plot_imputation_accuracy_by_genotype",  "combine_imputation_accuracy_plots", "plot_imputation_accuracy_sequential",
     "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region", "plot_hla_diversity", "plot_hla_allele_frequency"
 ]
 
@@ -470,6 +470,26 @@ def combine_imputation_accuracy_plots(fig1,
         f1.save(outdir + save_name) 
     return f1
 
+def plot_imputation_accuracy_sequential(ix, impaccs, labels, title, 
+                                        threshold, func = plot_imputation_accuracy_gw, 
+                                        save_fig = False, outdir = '', save_prefix = ''):
+    dfs = [impaccs[i] for i in ix] # ix should be ordered
+    figs = []
+
+    for i in range(1, len(ix) + 1):
+        seq_indices = list(range(i))
+        tmp_dfs = [dfs[j] for j in seq_indices]
+        tmp_labels = [labels[j] for j in seq_indices]
+        
+        fig1 = func(tmp_dfs, labels = tmp_labels, title = title)
+        fig2 = func(tmp_dfs, labels = tmp_labels, threshold = threshold, title = title, subplot = True)
+        f1 = combine_imputation_accuracy_plots(fig1, fig2, 
+                                               threshold = threshold, 
+                                               save_fig = save_fig, 
+                                               outdir = outdir, 
+                                               save_name = save_prefix + str(i) + '.png')
+        figs.append(f1)
+    return figs
 
 def plot_violin(df,
                 x,
