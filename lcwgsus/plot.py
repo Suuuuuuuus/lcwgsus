@@ -196,7 +196,8 @@ def plot_imputation_accuracy_typed(impacc_lst,
                              threshold=None,
                              title='',
                              marker_size=100,
-                             cmap_str='GnBu',
+                             colorbar_cmap=COLORBAR_CMAP,
+                             line_colors=CATEGORY_CMAP_HEX,
                              subplot=False,
                              save_fig=False,
                              outdir=None,
@@ -220,10 +221,9 @@ def plot_imputation_accuracy_typed(impacc_lst,
     ax = fig.add_subplot(111)
     plt.grid(False)
 
-    cmap = plt.get_cmap(cmap_str)
     magnitude = ceil - floor
     bounds = np.logspace(floor, ceil, magnitude + 1)
-    norm = mcolors.BoundaryNorm(bounds, cmap.N)
+    norm = mcolors.BoundaryNorm(bounds, COLORBAR_CMAP.N)
     fmt = lambda x, pos: '{:.0e}'.format(x)
 
     for i in range(len(df_lst)):
@@ -237,19 +237,19 @@ def plot_imputation_accuracy_typed(impacc_lst,
         x = np.arange(triplet.shape[0])
         afs = generate_af_axis(triplet[c0].values)
         vals = triplet[c1]
-        color = triplet[c2]
+        allele_counts = triplet[c2]
 
-        plt.plot(x, vals, label=label)
+        plt.plot(x, vals, label=label, c=line_colors[i])
         if not subplot:
             plt.xticks(x, afs, rotation=45)
         else:
-            ax.set_xticks(x, ['' for i in afs])
+            ax.set_xticks(x, ['' for _ in afs])
 
         im = ax.scatter(x,
                         vals,
-                        c=color,
+                        c=allele_counts,
                         edgecolor='black',
-                        cmap=cmap,
+                        cmap=colorbar_cmap,
                         norm=norm,
                         s=marker_size)
     if not subplot:
@@ -277,7 +277,7 @@ def plot_imputation_accuracy_gw(impacc_lst,
                                 threshold=None,
                                 title='',
                                 marker_size=100,
-                                cmap_str='GnBu',
+                                colorbar_cmap=COLORBAR_CMAP, line_colors=CATEGORY_CMAP_HEX,
                                 subplot=False,
                                 save_fig=False,
                                 outdir=None,
@@ -289,10 +289,9 @@ def plot_imputation_accuracy_gw(impacc_lst,
     ax = fig.add_subplot(111)
     plt.grid(False)
 
-    cmap = plt.get_cmap('GnBu')
     magnitude = 5
     bounds = np.logspace(3, 8, magnitude + 1)
-    norm = mcolors.BoundaryNorm(bounds, cmap.N)
+    norm = mcolors.BoundaryNorm(bounds, colorbar_cmap.N)
     fmt = lambda x, pos: '{:.0e}'.format(x)
 
     for i in range(len(df_lst)):
@@ -306,19 +305,19 @@ def plot_imputation_accuracy_gw(impacc_lst,
         x = np.arange(triplet.shape[0])
         afs = generate_af_axis(triplet[c0].values)
         vals = triplet[c1]
-        color = triplet[c2]
+        allele_counts = triplet[c2]
 
-        plt.plot(x, vals, label=label)
+        plt.plot(x, vals, label=label, c = line_colors[i])
         if not subplot:
             plt.xticks(x, afs, rotation=45)
         else:
-            ax.set_xticks(x, ['' for i in afs])
+            ax.set_xticks(x, ['' for _ in afs])
 
         im = ax.scatter(x,
                         vals,
-                        c=color,
+                        c=allele_counts,
                         edgecolor='black',
-                        cmap=cmap,
+                        cmap=colorbar_cmap,
                         norm=norm,
                         s=marker_size)
     if not subplot:
@@ -343,7 +342,8 @@ def plot_imputation_accuracy_by_genotype(impacc,
                                          threshold=None,
                                          title='',
                                          marker_size=100,
-                                         cmap_str='GnBu',
+                                         colorbar_cmap=COLORBAR_CMAP,
+                                         line_colors=CATEGORY_CMAP_HEX,
                                          subplot=False,
                                          save_fig=False,
                                          outdir=None,
@@ -367,13 +367,12 @@ def plot_imputation_accuracy_by_genotype(impacc,
     ax = fig.add_subplot(111)
     plt.grid(False)
 
-    cmap = plt.get_cmap(cmap_str)
     magnitude = ceil - floor
     bounds = np.logspace(floor, ceil, magnitude + 1)
-    norm = mcolors.BoundaryNorm(bounds, cmap.N)
+    norm = mcolors.BoundaryNorm(bounds, colorbar_cmap.N)
     fmt = lambda x, pos: '{:.0e}'.format(x)
 
-    for m in metrics:
+    for i, m in enumerate(metrics):
         cols = ['AF', m, m + '_AC']
         triplet = impacc[cols]
         if threshold is not None:
@@ -384,19 +383,19 @@ def plot_imputation_accuracy_by_genotype(impacc,
         x = np.arange(triplet.shape[0])
         afs = generate_af_axis(triplet[c0].values)
         vals = triplet[c1]
-        color = triplet[c2]
+        allele_counts = triplet[c2]
 
-        plt.plot(x, vals, label=label)
+        plt.plot(x, vals, label=label, c=line_colors[i])
         if not subplot:
             plt.xticks(x, afs, rotation=45)
         else:
-            ax.set_xticks(x, ['' for i in afs])
+            ax.set_xticks(x, ['' for _ in afs])
 
         im = ax.scatter(x,
                         vals,
-                        c=color,
+                        c=allele_counts,
                         edgecolor='black',
-                        cmap=cmap,
+                        cmap=colorbar_cmap,
                         norm=norm,
                         s=marker_size)
     if not subplot:

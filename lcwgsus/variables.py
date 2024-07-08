@@ -66,3 +66,11 @@ HLA_GENES = ['A', 'B', 'C', 'DQB1', 'DRB1']
 HLA_LOCI = [i+'1' for i in HLA_GENES] + [i+'2' for i in HLA_GENES]
 
 HLA_DIRECT_SEQUENCING_FILE = '/well/band/users/rbx225/GAMCC/data/hla_direct_sequencing/HLA_direct_sequencing_all.csv'
+
+COLORBAR_CMAP_STR = 'GnBu'
+COLORBAR_CMAP = plt.get_cmap(COLORBAR_CMAP_STR)
+COLORBAR_CMAP_HEX = [mcolors.rgb2hex(COLORBAR_CMAP(i)) for i in range(COLORBAR_CMAP.N)]
+
+CATEGORY_CMAP_STR = 'tab20'
+CATEGORY_CMAP = plt.get_cmap(CATEGORY_CMAP_STR)
+CATEGORY_CMAP_HEX = [mcolors.rgb2hex(CATEGORY_CMAP(i)) for i in range(CATEGORY_CMAP.N)]
