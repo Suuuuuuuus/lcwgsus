@@ -198,6 +198,7 @@ def plot_imputation_accuracy_typed(impacc_lst,
                              marker_size=100,
                              colorbar_cmap=COLORBAR_CMAP,
                              line_colors=CATEGORY_CMAP_HEX,
+                             set_ylim=True,
                              subplot=False,
                              save_fig=False,
                              outdir=None,
@@ -240,7 +241,8 @@ def plot_imputation_accuracy_typed(impacc_lst,
         allele_counts = triplet[c2]
 
         plt.plot(x, vals, label=label, c=line_colors[i])
-        plt.ylim((-0.05, 1.05))
+        if set_ylim:
+            plt.ylim((-0.05, 1.05))
         if not subplot:
             plt.xticks(x, afs, rotation=45)
         else:
@@ -284,6 +286,7 @@ def plot_imputation_accuracy_gw(impacc_lst,
                                 title='',
                                 marker_size=100,
                                 colorbar_cmap=COLORBAR_CMAP, line_colors=CATEGORY_CMAP_HEX,
+                                set_ylim=True,
                                 subplot=False,
                                 save_fig=False,
                                 outdir=None,
@@ -314,7 +317,8 @@ def plot_imputation_accuracy_gw(impacc_lst,
         allele_counts = triplet[c2]
 
         plt.plot(x, vals, label=label, c = line_colors[i])
-        plt.ylim((-0.05, 1.05))
+        if set_ylim:
+            plt.ylim((-0.05, 1.05))
         if not subplot:
             plt.xticks(x, afs, rotation=45)
         else:
@@ -356,6 +360,7 @@ def plot_imputation_accuracy_by_genotype(impacc,
                                          marker_size=100,
                                          colorbar_cmap=COLORBAR_CMAP,
                                          line_colors=CATEGORY_CMAP_HEX,
+                                         set_ylim=True,
                                          subplot=False,
                                          save_fig=False,
                                          outdir=None,
@@ -398,7 +403,8 @@ def plot_imputation_accuracy_by_genotype(impacc,
         allele_counts = triplet[c2]
 
         plt.plot(x, vals, label=label, c=line_colors[i])
-        plt.ylim((-0.05, 1.05))
+        if set_ylim:
+            plt.ylim((-0.05, 1.05))
         if not subplot:
             plt.xticks(x, afs, rotation=45)
         else:
