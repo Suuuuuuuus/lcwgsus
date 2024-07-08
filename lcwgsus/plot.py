@@ -31,7 +31,7 @@ from .variables import *
 from .process import *
 
 __all__ = [
-    "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw", "combine_imputation_accuracy_plots",
+    "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw", "plot_imputation_accuracy_by_gneotype",  "combine_imputation_accuracy_plots",
     "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region", "plot_hla_diversity", "plot_hla_allele_frequency"
 ]
 
@@ -257,9 +257,9 @@ def plot_imputation_accuracy_typed(impacc_lst,
                     boundaries=bounds,
                     ticks=bounds,
                     format=FuncFormatter(fmt),
-                    label='Allele Frequency Counts')
+                    label='Allele frequency counts')
 
-        plt.xlabel('gnomAD allele frequencies (%)')
+        plt.xlabel('GnomAD allele frequencies (%)')
         plt.title(title)
         plt.legend()
         plt.ylabel('Aggregated imputation accuracy ($r^2$)')
@@ -326,12 +326,91 @@ def plot_imputation_accuracy_gw(impacc_lst,
                     boundaries=bounds,
                     ticks=bounds,
                     format=FuncFormatter(fmt),
-                    label='Allele Frequency Counts')
+                    label='Allele frequency counts')
 
-        plt.xlabel('gnomAD allele frequencies (%)')
+        plt.xlabel('GnomAD allele frequencies (%)')
         plt.title(title)
         plt.legend()
         plt.ylabel('Aggregated imputation accuracy ($r^2$)')
+    ax.grid()
+    fig.tight_layout()
+
+    save_figure(save_fig, outdir, save_name)
+    return fig
+
+def plot_imputation_accuracy_by_genotype(impacc,
+                                         metrics = ['ccd_homref', 'ccd_het', 'ccd_homalt'],
+                                         threshold=None,
+                                         title='',
+                                         marker_size=100,
+                                         cmap_str='GnBu',
+                                         subplot=False,
+                                         save_fig=False,
+                                         outdir=None,
+                                         save_name=None):
+    ceil = 0
+    floor = 100
+
+    for m in metrics:
+        cols = ['AF', m, m + '_AC']
+        triplet = impacc[cols]
+        c0, c1, c2 = tuple(list(triplet.columns))
+        triplet[c1] = triplet[c1].replace(-9, 0)
+        magnitude_ceil = round_to_nearest_magnitude(triplet[c2].max())
+        magnitude_floor = round_to_nearest_magnitude(triplet[c2].min(), False)
+        if ceil < magnitude_ceil:
+            ceil = magnitude_ceil
+        if floor > magnitude_floor:
+            floor = magnitude_floor
+
+    fig = plt.figure(figsize=(8, 6), dpi = 300)
+    ax = fig.add_subplot(111)
+    plt.grid(False)
+
+    cmap = plt.get_cmap(cmap_str)
+    magnitude = ceil - floor
+    bounds = np.logspace(floor, ceil, magnitude + 1)
+    norm = mcolors.BoundaryNorm(bounds, cmap.N)
+    fmt = lambda x, pos: '{:.0e}'.format(x)
+
+    for m in metrics:
+        cols = ['AF', m, m + '_AC']
+        triplet = impacc[cols]
+        if threshold is not None:
+            triplet = triplet[triplet['AF'] >= threshold]
+        c0, c1, c2 = tuple(list(triplet.columns))
+        label = m
+        
+        x = np.arange(triplet.shape[0])
+        afs = generate_af_axis(triplet[c0].values)
+        vals = triplet[c1]
+        color = triplet[c2]
+
+        plt.plot(x, vals, label=label)
+        if not subplot:
+            plt.xticks(x, afs, rotation=45)
+        else:
+            ax.set_xticks(x, ['' for i in afs])
+
+        im = ax.scatter(x,
+                        vals,
+                        c=color,
+                        edgecolor='black',
+                        cmap=cmap,
+                        norm=norm,
+                        s=marker_size)
+    if not subplot:
+        plt.colorbar(im,
+                    boundaries=bounds,
+                    ticks=bounds,
+                    format=FuncFormatter(fmt),
+                    label='Allele frequency counts')
+
+        plt.xlabel('GnomAD allele frequencies (%)')
+        plt.title(title)
+        plt.legend()
+        plt.ylabel('Average concordance')
+
     ax.grid()
     fig.tight_layout()
 
