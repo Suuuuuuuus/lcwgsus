@@ -494,7 +494,7 @@ def plot_imputation_accuracy_sequential(ix, impaccs, labels, title,
         tmp_labels = [labels[j] for j in seq_indices]
         
         fig1 = func(tmp_dfs, labels = tmp_labels, title = title)
-        fig2 = func(tmp_dfs, labels = tmp_labels, threshold = threshold, title = title, subplot = True)
+        fig2 = func(tmp_dfs, labels = tmp_labels, threshold = threshold, title = title, set_ylim = False, subplot = True)
         f1 = combine_imputation_accuracy_plots(fig1, fig2, 
                                                threshold = threshold, 
                                                save_fig = save_fig, 
