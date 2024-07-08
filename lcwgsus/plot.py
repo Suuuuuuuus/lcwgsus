@@ -240,6 +240,7 @@ def plot_imputation_accuracy_typed(impacc_lst,
         allele_counts = triplet[c2]
 
         plt.plot(x, vals, label=label, c=line_colors[i])
+        plt.ylim((-0.05, 1.05))
         if not subplot:
             plt.xticks(x, afs, rotation=45)
         else:
@@ -262,7 +263,8 @@ def plot_imputation_accuracy_typed(impacc_lst,
         plt.xlabel('GnomAD allele frequencies (%)')
         plt.title(title)
         ax.legend(
-            bbox_to_anchor=(0.65, 0.75),
+            loc = 'upper right',
+            bbox_to_anchor=(1, 0.77),
             framealpha=1,
             prop={'size': 9}
         )
@@ -312,6 +314,7 @@ def plot_imputation_accuracy_gw(impacc_lst,
         allele_counts = triplet[c2]
 
         plt.plot(x, vals, label=label, c = line_colors[i])
+        plt.ylim((-0.05, 1.05))
         if not subplot:
             plt.xticks(x, afs, rotation=45)
         else:
@@ -334,7 +337,8 @@ def plot_imputation_accuracy_gw(impacc_lst,
         plt.xlabel('GnomAD allele frequencies (%)')
         plt.title(title)
         ax.legend(
-            bbox_to_anchor=(0.65, 0.75),
+            loc = 'upper right',
+            bbox_to_anchor=(0.99, 0.77),
             framealpha=1,
             prop={'size': 9}
         )
@@ -394,6 +398,7 @@ def plot_imputation_accuracy_by_genotype(impacc,
         allele_counts = triplet[c2]
 
         plt.plot(x, vals, label=label, c=line_colors[i])
+        plt.ylim((-0.05, 1.05))
         if not subplot:
             plt.xticks(x, afs, rotation=45)
         else:
@@ -416,7 +421,8 @@ def plot_imputation_accuracy_by_genotype(impacc,
         plt.xlabel('GnomAD allele frequencies (%)')
         plt.title(title)
         ax.legend(
-            bbox_to_anchor=(0.65, 0.75),
+            loc = 'upper right',
+            bbox_to_anchor=(1, 0.77),
             framealpha=1,
             prop={'size': 9}
         )
