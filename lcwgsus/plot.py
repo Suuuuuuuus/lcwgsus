@@ -453,7 +453,9 @@ def combine_imputation_accuracy_plots(fig1,
     f2_resized = f2.resize((inset_width, inset_height), Image.ANTIALIAS)
     f1.paste(f2_resized, (inset_left, fig_height - inset_bottom - inset_height), f2_resized)
 
-    save_figure(save_fig, outdir, save_name)
+    if save_fig:
+        check_outdir(outdir)
+        f1.save(outdir + save_name) 
     return f1
 
 
