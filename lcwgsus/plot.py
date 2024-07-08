@@ -9,6 +9,7 @@ import secrets
 import resource
 import itertools
 import multiprocessing
+from PIL import Image
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,7 +31,7 @@ from .variables import *
 from .process import *
 
 __all__ = [
-    "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw",
+    "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw", "combine_imputation_accuracy_plots",
     "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region", "plot_hla_diversity", "plot_hla_allele_frequency"
 ]
 
@@ -192,9 +193,11 @@ def plot_pc(df, num_PC=2, save_fig=False, save_name='graphs/PCA.png') -> None:
 def plot_imputation_accuracy_typed(impacc_lst,
                              metric='r2',
                              labels=None,
+                             threshold=None,
                              title='',
                              marker_size=100,
                              cmap_str='GnBu',
+                             subplot=False,
                              save_fig=False,
                              outdir=None,
                              save_name=None):
@@ -213,8 +216,8 @@ def plot_imputation_accuracy_typed(impacc_lst,
         if floor > magnitude_floor:
             floor = magnitude_floor
 
-    plt.figure(figsize=(8, 6))
-    ax = plt.subplot(1, 1, 1)
+    fig = plt.figure(figsize=(8, 6), dpi = 300)
+    ax = fig.add_subplot(111)
     plt.grid(False)
 
     cmap = plt.get_cmap(cmap_str)
@@ -225,6 +228,8 @@ def plot_imputation_accuracy_typed(impacc_lst,
 
     for i in range(len(df_lst)):
         triplet = df_lst[i]
+        if threshold is not None:
+            triplet = triplet[triplet['AF'] >= threshold]
         c0, c1, c2 = tuple(list(triplet.columns))
 
         label = c1 if labels is None else labels[i]
@@ -235,7 +240,10 @@ def plot_imputation_accuracy_typed(impacc_lst,
         color = triplet[c2]
 
         plt.plot(x, vals, label=label)
-        plt.xticks(x, afs, rotation=45)
+        if not subplot:
+            plt.xticks(x, afs, rotation=45)
+        else:
+            ax.set_xticks(x, ['' for i in afs])
 
         im = ax.scatter(x,
                         vals,
@@ -244,24 +252,23 @@ def plot_imputation_accuracy_typed(impacc_lst,
                         cmap=cmap,
                         norm=norm,
                         s=marker_size)
-    plt.colorbar(im,
-                 boundaries=bounds,
-                 ticks=bounds,
-                 format=FuncFormatter(fmt),
-                 label='Allele Frequency Counts')
+    if not subplot:
+        plt.colorbar(im,
+                    boundaries=bounds,
+                    ticks=bounds,
+                    format=FuncFormatter(fmt),
+                    label='Allele Frequency Counts')
 
-    plt.xlabel('gnomAD allele frequencies (%)')
-    plt.title(title)
-    plt.legend()
-    plt.ylabel('Aggregated imputation accuracy ($r^2$)')
-    ax = plt.gca()
+        plt.xlabel('gnomAD allele frequencies (%)')
+        plt.title(title)
+        plt.legend()
+        plt.ylabel('Aggregated imputation accuracy ($r^2$)')
+
     ax.grid()
+    fig.tight_layout()
 
-    if save_fig:
-        if not os.path.exists(outdir):
-            os.makedirs(outdir)
-        plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
-    return None
+    save_figure(save_fig, outdir, save_name)
+    return fig
 
 
 def plot_imputation_accuracy_gw(impacc_lst,
@@ -271,14 +278,15 @@ def plot_imputation_accuracy_gw(impacc_lst,
                                 title='',
                                 marker_size=100,
                                 cmap_str='GnBu',
+                                subplot=False,
                                 save_fig=False,
                                 outdir=None,
                                 save_name=None):
     cols = ['AF', metric, metric + '_AC']
     df_lst = [impacc[cols] for impacc in impacc_lst]
 
-    plt.figure(figsize=(10, 6))
-    ax = plt.subplot(1, 1, 1)
+    fig = plt.figure(figsize=(8, 6), dpi = 300)
+    ax = fig.add_subplot(111)
     plt.grid(False)
 
     cmap = plt.get_cmap('GnBu')
@@ -301,7 +309,10 @@ def plot_imputation_accuracy_gw(impacc_lst,
         color = triplet[c2]
 
         plt.plot(x, vals, label=label)
-        plt.xticks(x, afs, rotation=45)
+        if not subplot:
+            plt.xticks(x, afs, rotation=45)
+        else:
+            ax.set_xticks(x, ['' for i in afs])
 
         im = ax.scatter(x,
                         vals,
@@ -310,24 +321,62 @@ def plot_imputation_accuracy_gw(impacc_lst,
                         cmap=cmap,
                         norm=norm,
                         s=marker_size)
-    plt.colorbar(im,
-                 boundaries=bounds,
-                 ticks=bounds,
-                 format=FuncFormatter(fmt),
-                 label='Allele Frequency Counts')
+    if not subplot:
+        plt.colorbar(im,
+                    boundaries=bounds,
+                    ticks=bounds,
+                    format=FuncFormatter(fmt),
+                    label='Allele Frequency Counts')
 
-    plt.xlabel('gnomAD allele frequencies (%)')
-    plt.title(title)
-    plt.legend()
-    plt.ylabel('Aggregated imputation accuracy ($r^2$)')
-    ax = plt.gca()
+        plt.xlabel('gnomAD allele frequencies (%)')
+        plt.title(title)
+        plt.legend()
+        plt.ylabel('Aggregated imputation accuracy ($r^2$)')
     ax.grid()
+    fig.tight_layout()
 
-    if save_fig:
-        if not os.path.exists(outdir):
-            os.makedirs(outdir)
-        plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
-    return None
+    save_figure(save_fig, outdir, save_name)
+    return fig
+
+def combine_imputation_accuracy_plots(fig1, 
+                                      fig2, 
+                                      inset_position=[0.395, 0.2, 0.382, 0.37], 
+                                      threshold=0.01,
+                                      save_fig=False,
+                                      outdir=None,
+                                      save_name=None):
+    buf1 = io.BytesIO()
+    fig1.savefig(buf1, format='png')
+    plt.close(fig1)
+    buf1.seek(0)
+    f1 = Image.open(buf1)
+
+    buf2 = io.BytesIO()
+    fig2.savefig(buf2, format='png')
+    plt.close(fig2)
+    buf2.seek(0)
+    f2 = Image.open(buf2)
+
+    if threshold == 0.01:
+        # Left, bottom, width, height
+        inset_position = [0.395, 0.2, 0.382, 0.37]
+    elif threshold == 0.02:
+        inset_position = [0.441, 0.2, 0.333, 0.34]
+    else:
+        pass
+
+    left, bottom, width, height = inset_position
+
+    fig_width, fig_height = f1.size
+
+    inset_width, inset_height = int(fig_width * width), int(fig_height * height)
+    inset_left, inset_bottom = int(fig_width * left), int(fig_height * bottom)
+
+    f2_resized = f2.resize((inset_width, inset_height), Image.ANTIALIAS)
+    f1.paste(f2_resized, (inset_left, fig_height - inset_bottom - inset_height), f2_resized)
+
+    save_figure(save_fig, outdir, save_name)
+    return f1
 
 
 def plot_violin(df,
