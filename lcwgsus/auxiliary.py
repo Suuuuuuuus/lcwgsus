@@ -459,13 +459,17 @@ def check_one_field_match(typed, imputed, ix):
     return typed
 
 def check_two_field_match(typed, imputed, ix):
-    colnames = ['Two field1', 'Two field2']
     typedallele1 = set(typed.loc[ix, 'Two field1'].split('/'))
     typedallele2 = set(typed.loc[ix, 'Two field2'].split('/'))
     imputedallele1 = set(imputed.loc[ix, 'Two field1'].split('/'))
     imputedallele2 = set(imputed.loc[ix, 'Two field2'].split('/'))
     
-    typed.loc[ix, 'Two field match'] = max(len(typedallele1.intersection(imputedallele1)) + len(typedallele2.intersection(imputedallele2)), len(typedallele2.intersection(imputedallele1)) + len(typedallele1.intersection(imputedallele2)))
+    typed.loc[ix, 'Two field match'] = max(
+        max(len(typedallele1.intersection(imputedallele1)), 1) + 
+        max(len(typedallele2.intersection(imputedallele2)), 1),
+        max(len(typedallele2.intersection(imputedallele1)), 1) + 
+        max(len(typedallele1.intersection(imputedallele2)), 1)
+    )
     return typed
 
 def compare_hla_types(typed, imputed):

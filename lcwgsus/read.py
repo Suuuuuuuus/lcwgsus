@@ -190,7 +190,7 @@ def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all'
         pass
     return hla
 
-def read_hla_lc_imputation_results(indir, combined = True, retain = 'fv'):
+def read_hla_lc_imputation_results(indir, combined = True, recode_two_field = True, retain = 'fv'):
     if 'batch' in indir:
         batch = True
     else:
@@ -239,6 +239,11 @@ def read_hla_lc_imputation_results(indir, combined = True, retain = 'fv'):
         
     imputed = pd.concat(imputed_lst).sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
     imputed = imputed[['SampleID', 'Locus', 'One field1', 'Two field1', 'One field2', 'Two field2', 'prob']]
+
+    if recode_two_field:
+        g_code = pd.read_csv(AMBIGUOUS_G_CODE_FILE, sep = '\t')[['Locus', 'Two field']]
+
+        imputed = imputed.apply(recode_two_field_to_g_code, axis = 1, args = (g_code,))
     return imputed
 
 def read_hla_chip_imputation_results(vcf, retain = 'fv', recode_two_field = True):

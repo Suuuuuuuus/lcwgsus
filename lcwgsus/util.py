@@ -215,16 +215,16 @@ def calculate_bqsr_error_rate(indir, subset_samples = None, positions = ['-1', '
         mean_error[i] = tmp['prob'].mean()
     return mean_error
 
-def calculate_hla_imputation_accuracy(indir, hla, label, combined = True, retain = 'fv'):
+def calculate_hla_imputation_accuracy(indir, hla, label, combined = True, recode_two_field = True, retain = 'fv'):
     if indir[-1] == '/':
         source = 'lc'
     else:
         source = 'chip'
         
     if source == 'lc':
-        imputed = read_hla_lc_imputation_results(indir, combined, retain)
+        imputed = read_hla_lc_imputation_results(indir, combined, recode_two_field, retain)
     elif source == 'chip':
-        imputed = read_hla_chip_imputation_results(indir, retain)
+        imputed = read_hla_chip_imputation_results(indir, recode_two_field, retain)
     else:
         print('Invalid source input.')
         return None
