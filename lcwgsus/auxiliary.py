@@ -40,7 +40,7 @@ __all__ = ["get_mem", "check_outdir", "generate_af_axis",
            "extract_DS", "extract_format", "drop_cols",
            "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP", "get_rl_distribution",
            "extract_LDS", "extract_LDS_to_DS", "reorder_cols",
-           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "clean_hla",  "check_one_field_match", "check_two_field_match", "compare_hla_types", "group_top_n_alleles", "extract_hla_vcf_alleles_one_sample"]
+           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "clean_hla",  "check_one_field_match", "check_two_field_match", "compare_hla_types", "group_top_n_alleles", "extract_hla_vcf_alleles_one_sample", "recode_two_field_to_g_code"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -460,12 +460,12 @@ def check_one_field_match(typed, imputed, ix):
 
 def check_two_field_match(typed, imputed, ix):
     colnames = ['Two field1', 'Two field2']
-    typedallele1 = typed.loc[ix, 'Two field1'].split('/')
-    typedallele2 = typed.loc[ix, 'Two field2'].split('/')
-    imputedallele1 = imputed.loc[ix, 'Two field1']
-    imputedallele2 = imputed.loc[ix, 'Two field2']
+    typedallele1 = set(typed.loc[ix, 'Two field1'].split('/'))
+    typedallele2 = set(typed.loc[ix, 'Two field2'].split('/'))
+    imputedallele1 = set(imputed.loc[ix, 'Two field1'].split('/'))
+    imputedallele2 = set(imputed.loc[ix, 'Two field2'].split('/'))
     
-    typed.loc[ix, 'Two field match'] = max(np.sum((imputedallele1 in typedallele1) + (imputedallele2 in typedallele2)), np.sum((imputedallele2 in typedallele1) + (imputedallele1 in typedallele2)))
+    typed.loc[ix, 'Two field match'] = max(len(typedallele1.intersection(imputedallele1)) + len(typedallele2.intersection(imputedallele2)), len(typedallele2.intersection(imputedallele1)) + len(typedallele1.intersection(imputedallele2)))
     return typed
 
 def compare_hla_types(typed, imputed):
@@ -512,3 +512,16 @@ def extract_hla_vcf_alleles_one_sample(vcf, df, s, resolution):
             else:
                 df.loc[(s, l), prefix + 'field2'] = ID
     return df
+
+def recode_two_field_to_g_code(r, g_code_df):
+    l = r['Locus']
+    twofield1 = r['Two field1']
+    twofield2 = r['Two field2']
+    
+    tmp = g_code_df[(g_code_df['Locus'] == l) & (g_code_df['Two field'].str.contains(twofield1))]
+    if len(tmp) == 1:
+        r['Two field1'] = tmp['Two field'].values[0]
+    tmp = g_code_df[(g_code_df['Locus'] == l) & (g_code_df['Two field'].str.contains(twofield2))]
+    if len(tmp) == 1:
+        r['Two field2'] = tmp['Two field'].values[0]
+    return r

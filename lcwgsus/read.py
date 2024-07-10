@@ -241,7 +241,7 @@ def read_hla_lc_imputation_results(indir, combined = True, retain = 'fv'):
     imputed = imputed[['SampleID', 'Locus', 'One field1', 'Two field1', 'One field2', 'Two field2', 'prob']]
     return imputed
 
-def read_hla_chip_imputation_results(vcf, retain = 'fv'):
+def read_hla_chip_imputation_results(vcf, retain = 'fv', recode_two_field = True):
     source = vcf.split('/')[-2].split('_')[0]
     if source == 'lc':
         if retain == 'fv':
@@ -301,4 +301,9 @@ def read_hla_chip_imputation_results(vcf, retain = 'fv'):
         df = extract_hla_vcf_alleles_one_sample(tmp, df, s, 2)
 
     df = df.reset_index().sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
+
+    if recode_two_field:
+        g_code = pd.read_csv(AMBIGUOUS_G_CODE_FILE, sep = '\t')[['Locus', 'Two field']]
+
+        df = df.apply(recode_two_field_to_g_code, axis = 1, args = (g_code,))
     return df

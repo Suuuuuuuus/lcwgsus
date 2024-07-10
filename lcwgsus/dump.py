@@ -136,3 +136,75 @@ def compare_hla_types(r):
     else:
         r['match'] = len(typed.intersection(imputed))
     return r
+
+def fill_in_alleles_from_g_code(r):
+    if pd.isna(r['Included Alleles']):
+        r['Included Alleles'] = remove_superscripts(r['G code'])
+    return r
+
+def convert_alleles_to_g_code(locus, alleles_str, g_code_df = G_CODE_FILE):
+    g_code_lst = []
+    for a in alleles_str.split('/'):
+        tmp = g_code_df[(g_code_df['Locus'] == locus) & (g_code_df['alleles'].str.contains(a))].reset_index(drop = True)
+        if len(tmp) > 1:
+            onef = a.split(':')[0]
+            tmp = tmp[tmp['G code'].str.startswith(onef)].reset_index(drop = True)
+            g_code_lst.append(tmp.loc[0, 'G code'])
+        elif len(tmp) == 1:
+            g_code_lst.append(tmp.loc[0, 'G code'])
+        else: # Temporarily remove alleles if they are not even seen in the database
+            pass
+    if len(g_code_lst) == 0:
+        return '-9'
+    else:
+        g_code_lst = list(set(g_code_lst))
+        return '/'.join(g_code_lst)
+
+'''
+hla = lcwgsus.read_hla_direct_sequencing(retain = 'fv')
+
+hla_dirs = ['/well/band/users/rbx225/GAMCC/results/hla/imputation/batches_archived/', 
+                  '/well/band/users/rbx225/GAMCC/results/hla/server/chip_vanilla/chr6.dose.vcf.gz',
+                  '/well/band/users/rbx225/GAMCC/results/hla/server/lc_oneKG/chr6.dose.vcf.gz']
+labels =  ['lc:1KG (QUILT-HLA)', 'chip:multiEth', 'lc:1KG-multiEth']
+
+hla_reports = []
+
+colors = plt.get_cmap(cmap).colors[:(len(labels))]
+hex_codes = [mcolors.to_hex(color) for color in colors]
+colors = dict(zip(labels, hex_codes))
+
+
+for d, l in zip(hla_dirs, labels):
+    report = lcwgsus.calculate_hla_imputation_accuracy(d, hla, l)
+    hla_reports.append(report)
+report = pd.concat(hla_reports)
+report['Locus'] = pd.Categorical(report['Locus'], categories=HLA_GENES[::-1], ordered=True)
+report['Source'] = pd.Categorical(report['Source'], categories=labels, ordered=True)
+report = report.sort_values(by = 'Locus')
+'''
+
+'''
+def copy_g_code(r):
+    if pd.isna(r['G code']): 
+        r['G code'] = r['alleles']
+    return r
+
+g_code = pd.read_csv('data/hla_direct_sequencing/hla_nom_g.txt', skiprows = 6, header = None, sep = ';')
+g_code.columns = ['Locus', 'alleles', 'G code']
+g_code['Locus'] = g_code['Locus'].str.split('*').str.get(0)
+g_code = g_code[g_code['Locus'].isin(HLA_GENES)].reset_index(drop = True)
+g_code = g_code[g_code['alleles'].str.contains('/')]
+g_code['Two field'] = ''
+
+def resolve_g_code_to_two_field(r):
+    alleles = r['alleles'].split('/')
+    two_field = list(set([":".join(i.split(':', 2)[:2]) for i in alleles]))
+    r['Two field'] = '/'.join(two_field)
+    return r
+
+g_code = g_code.apply(resolve_g_code_to_two_field, axis = 1)
+g_code = g_code.drop(columns = ['alleles'])
+g_code = g_code[g_code['Two field'].str.contains('/')].reset_index(drop = True)
+g_code.to_csv('data/hla_direct_sequencing/ambiguous_G_codes.tsv', index = False, header = True, sep = '\t')
+'''
