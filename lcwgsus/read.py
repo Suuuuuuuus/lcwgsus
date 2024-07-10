@@ -246,7 +246,7 @@ def read_hla_lc_imputation_results(indir, combined = True, recode_two_field = Tr
         imputed = imputed.apply(recode_two_field_to_g_code, axis = 1, args = (g_code,))
     return imputed
 
-def read_hla_chip_imputation_results(vcf, retain = 'fv', recode_two_field = True):
+def read_hla_chip_imputation_results(vcf, recode_two_field = 'True', retain = 'fv'):
     source = vcf.split('/')[-2].split('_')[0]
     if source == 'lc':
         if retain == 'fv':
