@@ -129,20 +129,6 @@ def get_imputed_dosage(df: pd.DataFrame, colname: str = 'call') -> float:
     else:
         return s.split(':')[2]
 
-
-def generate_rename_map(mini=False, sample_linker=SAMPLE_LINKER_FILE):
-    sample_linker = pd.read_table(sample_linker, sep=',')
-    if not mini:
-        sample_linker = sample_linker[~sample_linker['Sample_Name'].str.
-                                      contains('mini')]
-    else:
-        sample_linker = sample_linker[
-            sample_linker['Sample_Name'].str.contains('mini')]
-    rename_map = dict(
-        zip(sample_linker['Sample_Name'], sample_linker['Chip_Name']))
-
-    return rename_map
-
 def recode_indel(r: pd.Series, info: str = 'INFO') -> pd.Series:
     ### Read from flanking sequence and recode ref/alt to the real nucleotide rather than '-'
     # Input: one row of df
@@ -204,6 +190,19 @@ def intersect_dfs(lst: List[pd.DataFrame], common_cols: List[str] = COMMON_COLS)
     for i in range(len(lst)):
         lst[i] = lst[i].set_index(common_cols).loc[common_indices].reset_index().drop_duplicates(subset = common_cols)
     return lst
+
+def generate_rename_map(mini=False, sample_linker=SAMPLE_LINKER_FILE):
+    sample_linker = pd.read_table(sample_linker, sep=',')
+    if not mini:
+        sample_linker = sample_linker[~sample_linker['Sample_Name'].str.
+                                      contains('mini')]
+    else:
+        sample_linker = sample_linker[
+            sample_linker['Sample_Name'].str.contains('mini')]
+    rename_map = dict(
+        zip(sample_linker['Sample_Name'], sample_linker['Chip_Name']))
+
+    return rename_map
 
 def find_matching_samples(chip_samples, rename_map, lc='chip'):
     if lc == 'chip':
