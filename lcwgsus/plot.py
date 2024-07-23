@@ -35,7 +35,7 @@ from .process import *
 
 __all__ = [
     "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw", "plot_imputation_accuracy_by_genotype",  "combine_imputation_accuracy_plots", "plot_imputation_accuracy_sequential",
-    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region", "plot_hla_diversity", "plot_hla_allele_frequency", "plot_hla_imputation_accuracy"
+    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region", "plot_hla_diversity", "plot_hla_allele_frequency", "plot_hla_imputation_accuracy", "plot_hla_imputation_accuracy_by_type"
 ]
 
 def save_figure(save: bool, outdir: str, name: str) -> None:
