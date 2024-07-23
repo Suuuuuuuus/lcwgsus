@@ -722,6 +722,7 @@ def plot_hla_imputation_accuracy_by_type(hla,
        
         ax = plt.gca()
         ax.grid(True)
+        ax.legend()
         ax.set_xlabel('HLA (true) allele counts')
         ax.set_ylabel('Concordance')
         ax.set_title('HLA imputation accuracy by type')
@@ -734,6 +735,7 @@ def plot_hla_imputation_accuracy_by_type(hla,
             df = ccd_dict_chip[l]
             ax1.scatter(df['Sum'], df['Accuracy'], c = CATEGORY_CMAP_HEX[i], label = l)
         ax1.grid(True)
+        ax1.legend()
         ax1.set_xlabel('HLA (true) allele counts')
         ax1.set_ylabel('Concordance')
         ax1.set_title('HLA imputation accuracy by type (chip)')
@@ -742,6 +744,7 @@ def plot_hla_imputation_accuracy_by_type(hla,
             df = ccd_dict_lc[l]
             ax2.scatter(df['Sum'], df['Accuracy'], c = CATEGORY_CMAP_HEX[i], label = l)
         ax2.grid(True)
+        ax2.legend()
         ax2.set_xlabel('HLA (true) allele counts')
         ax2.set_ylabel('Concordance')
         ax2.set_title('HLA imputation accuracy by type (lc)')
