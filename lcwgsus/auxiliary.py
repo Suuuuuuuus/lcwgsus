@@ -40,7 +40,7 @@ __all__ = ["get_mem", "check_outdir", "generate_af_axis",
            "extract_DS", "extract_format", "drop_cols",
            "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP", "get_rl_distribution",
            "extract_LDS", "extract_LDS_to_DS", "reorder_cols",
-           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "clean_hla",  "check_one_field_match", "check_two_field_match", "compare_hla_types", "group_top_n_alleles", "extract_hla_vcf_alleles_one_sample", "recode_two_field_to_g_code"]
+           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "clean_hla",  "check_one_field_match", "check_two_field_match", "check_two_field_match_by_type", "compare_hla_types", "compare_hla_types_by_type", "group_top_n_alleles", "extract_hla_vcf_alleles_one_sample", "recode_two_field_to_g_code"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -471,8 +471,33 @@ def check_two_field_match(typed, imputed, ix):
     ]]
 
     typed.loc[ix, 'Two field match'] = max(c11 + c22, c21 + c12)
-    
     return typed
+
+def check_two_field_match_by_type(df, typed_l, imputed_l, ix):
+    t1 = typed_l.loc[ix, 'Two field1']
+    t2 = typed_l.loc[ix, 'Two field2']
+    i1 = imputed_l.loc[ix, 'Two field1']
+    i2 = imputed_l.loc[ix, 'Two field2']
+    
+    typedallele1 = set(t1.split('/'))
+    typedallele2 = set(t2.split('/'))
+    imputedallele1 = set(i1.split('/'))
+    imputedallele2 = set(i2.split('/'))
+
+    c11, c22, c12, c21 = [1 if x >= 1 else 0 for x in [
+        len(typedallele1.intersection(imputedallele1)),
+        len(typedallele2.intersection(imputedallele2)),
+        len(typedallele2.intersection(imputedallele1)),
+        len(typedallele1.intersection(imputedallele2))
+    ]]
+
+    if c11 + c22 > c12 + c21:
+        df.loc[t1, i1] += 1
+        df.loc[t2, i2] += 1
+    else:
+        df.loc[t1, i2] += 1
+        df.loc[t2, i1] += 1        
+    return df
 
 def compare_hla_types(typed, imputed):
     typed = typed.copy().sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
@@ -487,6 +512,26 @@ def compare_hla_types(typed, imputed):
         typed = check_one_field_match(typed, imputed, ix)
         typed = check_two_field_match(typed, imputed, ix)   
     return typed
+
+def compare_hla_types_by_type(typed, imputed):
+    typed = typed.copy().sort_values(by = ['SampleID', 'Locus'])
+    imputed = imputed.copy().sort_values(by = ['SampleID', 'Locus'])
+    samples = imputed['SampleID'].unique()
+    typed = typed[typed['SampleID'].isin(samples)].sort_values(by = ['SampleID', 'Locus'])
+    
+    res_dict = {}
+    for l in HLA_GENES:
+        typed_l = typed[typed['Locus'] == l].reset_index(drop = True)
+        imputed_l = imputed[imputed['Locus'] == l].reset_index(drop = True)
+        
+        typed_types = list(pd.concat([typed_l['Two field1'], typed_l['Two field2']]).sort_values().unique())
+        imputed_types = list(pd.concat([imputed_l['Two field1'], imputed_l['Two field2']]).sort_values().unique())
+        
+        res_dict[l] = pd.DataFrame(index=typed_types, columns=imputed_types).fillna(0)
+        
+        for ix in range(len(typed_l)):
+            res_dict[l] = check_two_field_match_by_type(res_dict[l], typed_l, imputed_l, ix)  
+    return res_dict
 
 def group_top_n_alleles(series, n=5):
     top_n = series.nlargest(n)

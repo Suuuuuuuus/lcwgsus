@@ -20,6 +20,7 @@ pd.options.mode.chained_assignment = None
 
 from .auxiliary import *
 from .variables import *
+from .read import *
 
 __all__ = [
     "calculate_per_bin_kmer_error_rate", "calculate_af", "calculate_ss_cumsum_coverage",
@@ -30,7 +31,7 @@ __all__ = [
     "calculate_v_imputation_accuracy", "average_v_metrics",
     "generate_v_impacc", "calculate_weighted_average", "average_impacc_by_chr",
     "round_to_nearest_magnitude", "calculate_imputation_summary_metrics",
-    "calculate_imputation_sumstats", "calculate_shannon_entropy", "calculate_hla_concordance", "generate_hla_imputation_report", "calculate_hla_entropy"
+    "calculate_imputation_sumstats", "calculate_shannon_entropy", "calculate_hla_concordance", "calculate_hla_concordance_by_type", "generate_hla_imputation_report", "calculate_hla_entropy", "calculate_hla_imputation_accuracy"
 ]
 
 # To clean
@@ -456,6 +457,33 @@ def calculate_hla_concordance(df):
     ccd_two = df['Two field match'].sum()/(df.shape[0]*2)
     return [ccd_one, ccd_two]
 
+def calculate_hla_concordance_by_type(ccd_dict, verbose = False):
+    res_dict = {}
+    for l in HLA_GENES:
+        df = ccd_dict[l]
+        df['Accuracy'] = 0
+        df['Sum'] = 0
+        df['Match'] = 0
+        for a in df.index:
+            r = df.loc[a]            
+            index_set = set(a.split('/'))
+            match = 0
+            for column in df.columns:
+                column_set = set(column.split('/'))
+                if index_set & column_set:  # Check if there is an intersection
+                    match += df.loc[a, column]
+
+            total = r.sum()
+            df.loc[a, 'Accuracy'] = match/total
+            df.loc[a, 'Sum'] = total
+            df.loc[a, 'Match'] = match
+            
+        if not verbose:
+            res_dict[l] = df[['Accuracy', 'Sum', 'Match']]
+        else:
+            res_dict[l] = df
+    return res_dict
+
 def generate_hla_imputation_report(df, source, loci = HLA_GENES):
     report = pd.DataFrame(columns = ['Locus', 'Concordance', 'Resolution', 'Source'])
     for l in loci:
@@ -479,3 +507,21 @@ def calculate_hla_entropy(hla_alleles_df):
                             'Number of distinct alleles': n_allele,
                            'Number of ambiguous type from SBT': n_ambiguous})
     return summary
+
+def calculate_hla_imputation_accuracy(indir, hla, label, combined = True, recode_two_field = True, retain = 'fv'):
+    if indir[-1] == '/':
+        source = 'lc'
+    else:
+        source = 'chip'
+        
+    if source == 'lc':
+        imputed = read_hla_lc_imputation_results(indir, combined, recode_two_field, retain)
+    elif source == 'chip':
+        imputed = read_hla_chip_imputation_results(indir, recode_two_field, retain)
+    else:
+        print('Invalid source input.')
+        return None
+    
+    compared = compare_hla_types(hla, imputed)
+    hla_report = generate_hla_imputation_report(compared, label)
+    return hla_report

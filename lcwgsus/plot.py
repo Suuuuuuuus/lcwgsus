@@ -9,6 +9,8 @@ import secrets
 import resource
 import itertools
 import multiprocessing
+from plotnine import *
+import patchworklib as pw
 from PIL import Image
 import pandas as pd
 import numpy as np
@@ -28,11 +30,12 @@ pd.options.mode.chained_assignment = None
 from .auxiliary import *
 from .calculate import *
 from .variables import *
+from .read import *
 from .process import *
 
 __all__ = [
     "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw", "plot_imputation_accuracy_by_genotype",  "combine_imputation_accuracy_plots", "plot_imputation_accuracy_sequential",
-    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region", "plot_hla_diversity", "plot_hla_allele_frequency"
+    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region", "plot_hla_diversity", "plot_hla_allele_frequency", "plot_hla_imputation_accuracy"
 ]
 
 def save_figure(save: bool, outdir: str, name: str) -> None:
@@ -643,4 +646,106 @@ def plot_hla_allele_frequency(hla_alleles_df, gene):
     plt.ylabel('Counts')
     plt.xticks(rotation = 45, fontsize=9)
     plt.show()
+    return None
+
+def plot_hla_imputation_accuracy(hla, hla_dirs, labels, indices = None, cmap = CATEGORY_CMAP_STR, plot_onefield = True, save_fig=False, outdir=None, save_name=None):
+    hla_reports = []
+    
+    colors = plt.get_cmap(cmap).colors[:(len(labels))]
+    hex_codes = [mcolors.to_hex(color) for color in colors]
+    colors = dict(zip(labels, hex_codes))
+    
+    if indices is not None:
+        hla_dirs = [hla_dirs[i] for i in indices]
+        labels = [labels[i] for i in indices]
+        
+    for d, l in zip(hla_dirs, labels):
+        report = calculate_hla_imputation_accuracy(d, hla, l)
+        hla_reports.append(report)
+    report = pd.concat(hla_reports)
+    report['Locus'] = pd.Categorical(report['Locus'], categories=HLA_GENES[::-1], ordered=True)
+    report['Source'] = pd.Categorical(report['Source'], categories=labels, ordered=True)
+    report = report.sort_values(by = 'Locus')
+
+    twofield = report[report['Resolution'] == 'Two field']
+    plot2 = (
+        ggplot(twofield, aes(x='Concordance', y='Locus', color='Source')) +
+        geom_point(size=2) + ggtitle('Two Field') +
+        scale_color_manual(values=colors) +
+#         labs(x='Concordance', y='Locus', color='Source') + 
+        theme_minimal() + 
+        theme(axis_text_y=element_text(angle=0), title=element_text(hjust=2))
+    )
+    p2 = pw.load_ggplot(plot2, figsize=(4,4))
+    
+    if plot_onefield:
+        onefield = report[report['Resolution'] == 'One field']
+        plot1 = (
+            ggplot(onefield, aes(x='Concordance', y='Locus', color='Source')) +
+            geom_point(size=2) + ggtitle('One Field') + theme_minimal() +
+            scale_color_manual(values=colors) +
+            theme(axis_text_y=element_text(angle=0), title=element_text(hjust='1'))
+        )
+        p1 = pw.load_ggplot(plot1, figsize=(4,4))
+        p12 = (p1|p2)
+    else:
+        p12 = p2
+
+    if save_fig:
+        check_outdir(outdir)
+        p12.savefig(outdir + save_name)
+    return p12
+
+def plot_hla_imputation_accuracy_by_type(hla, 
+                                         hla_dirs, labels, cmap = CATEGORY_CMAP_STR, combine = True, save_fig=False, outdir=None, save_name=None):
+    lc = read_hla_lc_imputation_results(hla_dirs[0], retain = 'fv')
+    chip = read_hla_chip_imputation_results(hla_dirs[1], retain = 'fv')
+    
+    ccd_dict_chip = compare_hla_types_by_type(hla, chip)
+    ccd_dict_chip = calculate_hla_concordance_by_type(ccd_dict_chip, verbose = False)
+    
+    samples = chip['SampleID'].unique()
+    lc = lc[lc['SampleID'].isin(samples)].sort_values(by = ['SampleID', 'Locus'])
+
+    ccd_dict_lc = compare_hla_types_by_type(hla, lc)
+    ccd_dict_lc = calculate_hla_concordance_by_type(ccd_dict_lc, verbose = False)
+    
+    if combine:
+        fig = plt.figure(figsize=(8, 6), dpi = 300)
+        for i, l in enumerate(HLA_GENES):
+            df = ccd_dict_chip[l]
+            plt.scatter(df['Sum'], df['Accuracy'], c = CATEGORY_CMAP_HEX[i], label = f'{l} ({labels[0]})', marker = 'o')
+
+#         for i, l in enumerate(HLA_GENES):
+            df = ccd_dict_lc[l]
+            plt.scatter(df['Sum'], df['Accuracy'], c = CATEGORY_CMAP_HEX[i], label = f'{l} ({labels[1]})', marker = 'x')
+       
+        ax = plt.gca()
+        ax.grid(True)
+        ax.set_xlabel('HLA (true) allele counts')
+        ax.set_ylabel('Concordance')
+        ax.set_title('HLA imputation accuracy by type')
+        plt.show()
+    
+    else:
+        fig, ((ax1, ax2)) = plt.subplots(1, 2, figsize = (10,8), dpi = 300)
+        
+        for i, l in enumerate(HLA_GENES):
+            df = ccd_dict_chip[l]
+            ax1.scatter(df['Sum'], df['Accuracy'], c = CATEGORY_CMAP_HEX[i], label = l)
+        ax1.grid(True)
+        ax1.set_xlabel('HLA (true) allele counts')
+        ax1.set_ylabel('Concordance')
+        ax1.set_title('HLA imputation accuracy by type (chip)')
+
+        for i, l in enumerate(HLA_GENES):
+            df = ccd_dict_lc[l]
+            ax2.scatter(df['Sum'], df['Accuracy'], c = CATEGORY_CMAP_HEX[i], label = l)
+        ax2.grid(True)
+        ax2.set_xlabel('HLA (true) allele counts')
+        ax2.set_ylabel('Concordance')
+        ax2.set_title('HLA imputation accuracy by type (lc)')
+        plt.show()
+        
+    save_figure(save_fig, outdir, save_name)
     return None
