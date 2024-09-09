@@ -48,8 +48,8 @@ def save_figure(save: bool, outdir: str, name: str) -> None:
 def plot_afs(df1: pd.DataFrame,
              df2: pd.DataFrame,
              save_fig: bool = False,
-             outdir: str = 'graphs/',
-             save_name: str = 'af_vs_af.png') -> float:
+             outdir: str = None,
+             save_name: str = None) -> float:
     # df1 is the chip df with cols chr, pos, ref, alt and prop
     # df2 is the other df with the same cols
     df = pd.merge(df1, df2, on=['chr', 'pos', 'ref', 'alt'], how='inner')
@@ -57,8 +57,8 @@ def plot_afs(df1: pd.DataFrame,
     plt.xlabel('ChIP MAF (%)')
     plt.ylabel('GGVP AF (%)')
     plt.title('Check AFs')
-    if save_fig:
-        plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
+
+    save_figure(save_fig, outdir, save_name)
     return np.corrcoef(df['prop_x'], df['prop_y'])[0, 1]
 # Currently deprecated
 
@@ -69,8 +69,8 @@ def plot_sequencing_skew(arys,
                          code=None,
                          num_coverage=5,
                          save_fig=False,
-                         save_name='prop_genome_at_least_coverage.png',
-                         outdir='graphs/'):
+                         outdir=None,
+                         save_name=None):
     poisson_expectation = 1 - np.cumsum(
         poisson.pmf(np.arange(num_coverage), mu=avg_coverage, loc=0))
     se = np.sqrt(avg_coverage / len(arys))
@@ -102,8 +102,8 @@ def plot_sequencing_skew(arys,
     plt.ylabel('Sequencing Skew')
     #plt.legend()
     plt.title('Sequencing Skew')
-    if save_fig:
-        plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
+
+    save_figure(save_fig, outdir, save_name)
     return None
 
 
@@ -111,8 +111,8 @@ def plot_info_vs_af(vcf,
                     afs,
                     MAF_ary=MAF_ARY,
                     save_fig=False,
-                    outdir='graphs/',
-                    save_name='info_vs_af.png'):
+                    outdir=None,
+                    save_name=None):
     df = pd.merge(vcf[['chr', 'pos', 'ref', 'alt', 'info']],
                   afs,
                   on=['chr', 'pos', 'ref', 'alt'],
@@ -125,15 +125,15 @@ def plot_info_vs_af(vcf,
     plt.title('INFO Score vs Allele Frequencies')
     ax = plt.gca()
     ax.set_xticklabels(MAF_ary[np.sort(df['classes'].unique()) - 1])
-    if save_fig:
-        plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
+
+    save_figure(save_fig, outdir, save_name)
     return None
 
 
 def plot_r2_vs_info(df,
                     save_fig=False,
-                    outdir='graphs/',
-                    save_name='r2_vs_info.png'):
+                    outdir=None,
+                    save_name=None):
     # Input df has AF bins, r2, avg_info, and bin counts
     pivot = df.pivot('corr', 'INFO_SCORE', 'Bin Count')
     plt.figure(figsize=(8, 6))
@@ -146,12 +146,12 @@ def plot_r2_vs_info(df,
     plt.title('Heatmap of correlation vs info_score with bin counts')
     plt.xticks(np.arange(len(x_ticks)), x_ticks, rotation=45)
     plt.yticks(np.arange(len(y_ticks)), y_ticks)
-    if save_fig:
-        plt.savefig(outdir + save_name, bbox_inches="tight", dpi=300)
+
+    save_figure(save_fig, outdir, save_name)
     return None
 
 
-def plot_pc(df, num_PC=2, save_fig=False, save_name='graphs/PCA.png') -> None:
+def plot_pc(df, num_PC=2, save_fig=False, outdir=None, save_name=None) -> None:
     # Input df has 'PC_1', 'PC_2', ... columns and an additional column called 'ethnic'
     plt.figure(figsize=(10, 8))
 
@@ -184,12 +184,11 @@ def plot_pc(df, num_PC=2, save_fig=False, save_name='graphs/PCA.png') -> None:
                                 "linewidth": 0,
                                 "shade": False
                             })
-        plot.fig.suptitle('PCA Plot', y=1.02)
+        plot.suptitle('PCA Plot', y=1.02)
     else:
         print("You should at least plot the first two PCs.")
-    if save_fig:
-        plt.savefig(save_name, bbox_inches="tight", dpi=300)
-    plt.show()
+
+    save_figure(save_fig, outdir, save_name)
     return None
 
 
@@ -715,8 +714,6 @@ def plot_hla_imputation_accuracy_by_type(hla,
         for i, l in enumerate(HLA_GENES):
             df = ccd_dict_chip[l]
             plt.scatter(df['Sum'], df['Accuracy'], c = CATEGORY_CMAP_HEX[i], label = f'{l} ({labels[0]})', marker = 'o')
-
-#         for i, l in enumerate(HLA_GENES):
             df = ccd_dict_lc[l]
             plt.scatter(df['Sum'], df['Accuracy'], c = CATEGORY_CMAP_HEX[i], label = f'{l} ({labels[1]})', marker = 'x')
        
