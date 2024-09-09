@@ -700,8 +700,9 @@ def plot_hla_imputation_accuracy(hla, hla_dirs, labels, indices = None, cmap = C
         p12.savefig(outdir + save_name)
     return p12
 
-def plot_hla_imputation_accuracy_by_type(hla, 
-                                         hla_dirs, labels, cmap = CATEGORY_CMAP_STR, combine = True, save_fig=False, outdir=None, save_name=None):
+def plot_hla_imputation_accuracy_by_type(hla, hla_dirs, labels, title = 'HLA imputation accuracy by type', 
+                                         cmap = CATEGORY_CMAP_STR, combine = True, 
+                                         save_fig=False, outdir=None, save_name=None):
     lc = read_hla_lc_imputation_results(hla_dirs[0], retain = 'fv')
     chip = read_hla_chip_imputation_results(hla_dirs[1], retain = 'fv')
     
@@ -727,8 +728,7 @@ def plot_hla_imputation_accuracy_by_type(hla,
         ax.legend()
         ax.set_xlabel('HLA (true) allele counts')
         ax.set_ylabel('Concordance')
-        ax.set_title('HLA imputation accuracy by type')
-        plt.show()
+        ax.set_title(title)
     
     else:
         fig, ((ax1, ax2)) = plt.subplots(1, 2, figsize = (10,8), dpi = 300)
@@ -740,7 +740,7 @@ def plot_hla_imputation_accuracy_by_type(hla,
         ax1.legend()
         ax1.set_xlabel('HLA (true) allele counts')
         ax1.set_ylabel('Concordance')
-        ax1.set_title('HLA imputation accuracy by type (chip)')
+        ax1.set_title(title + ' (chip)')
 
         for i, l in enumerate(HLA_GENES):
             df = ccd_dict_lc[l]
@@ -749,8 +749,8 @@ def plot_hla_imputation_accuracy_by_type(hla,
         ax2.legend()
         ax2.set_xlabel('HLA (true) allele counts')
         ax2.set_ylabel('Concordance')
-        ax2.set_title('HLA imputation accuracy by type (lc)')
-        plt.show()
+        ax2.set_title(title + ' (lc)')
         
     save_figure(save_fig, outdir, save_name)
+    plt.show()
     return None
