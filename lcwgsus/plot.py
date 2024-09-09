@@ -597,7 +597,10 @@ def plot_imputation_metric_in_region(
         save_figure(save_fig, outdir, save_name)
     return df[metric].mean()
 
-def plot_hla_diversity(hla_alleles_df):
+def plot_hla_diversity(hla_alleles_df, title = '', 
+                       save_fig=False,
+                       outdir=None,
+                       save_name=None):
     hla_counts = hla_alleles_df.groupby(['Locus', 'Allele']).size().unstack(fill_value=0)
 
     top_hla_counts = hla_counts.apply(group_top_n_alleles, axis=1)
@@ -629,7 +632,9 @@ def plot_hla_diversity(hla_alleles_df):
 
     ax.set_xlabel('HLA gene')
     ax.set_ylabel('Frequency')
-    ax.set_title('HLA allelic diversity for 250 people')
+    ax.set_title(title)
+
+    save_figure(save_fig, outdir, save_name)
 
     plt.show()
     return None
