@@ -419,12 +419,16 @@ def remove_superscripts(s):
     result = ''.join(matches)
     return result
 
-def resolve_ambiguous_hla_type(r):
+def resolve_ambiguous_hla_type(r, unique = True):
     if pd.isna(r['Included Alleles']):
         r['Included Alleles'] = remove_superscripts(r['G code'])
     alleles = r['Included Alleles'].split('/')
-    one_field = list(set([":".join(i.split(':', 1)[:1]) for i in alleles]))
-    two_field = list(set([":".join(i.split(':', 2)[:2]) for i in alleles]))
+    if unique:
+        one_field = list(set([":".join(i.split(':', 1)[:1]) for i in alleles]))
+        two_field = list(set([":".join(i.split(':', 2)[:2]) for i in alleles]))
+    else:
+        one_field = [":".join(i.split(':', 1)[:1]) for i in alleles]
+        two_field = [":".join(i.split(':', 2)[:2]) for i in alleles]
     r['One field1'] =  '/'.join(one_field)
     r['Two field1'] = '/'.join(two_field)
     return r

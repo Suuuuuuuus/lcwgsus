@@ -156,14 +156,14 @@ def multi_read_af(chromosomes, files, combine = True):
     else:
         return res_lst
 
-def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all'):
+def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all', unique_two_field = True):
     hla = pd.read_csv(file)
     hla = hla[['SampleID', 'Locus', 'Included Alleles', 'G code']]
     hla = hla[hla['Locus'].isin(HLA_GENES)].reset_index(drop = True)
     hla['One field1'] = ''
     hla['Two field1'] = ''
 
-    hla = hla.apply(resolve_ambiguous_hla_type, axis = 1)
+    hla = hla.apply(resolve_ambiguous_hla_type, args = (unique_two_field), axis = 1)
     hla = hla.drop(columns = ['Included Alleles', 'G code'])
 
     for s in hla['SampleID'].unique():
