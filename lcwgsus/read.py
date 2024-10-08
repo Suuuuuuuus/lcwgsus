@@ -181,10 +181,10 @@ def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all'
     hla.columns = ['SampleID', 'Locus', 'One field1', 'Two field1', 'One field2', 'Two field2']
 
     if retain == 'fv':
-        fv_samples = read_tsv_as_lst('data/sample_tsvs/fv_gam_names.tsv')
+        fv_samples = read_tsv_as_lst('/well/band/users/rbx225/GAMCC/data/sample_tsvs/fv_gam_names.tsv')
         hla = hla[hla['SampleID'].isin(fv_samples)].reset_index(drop = True)
     elif retain == 'mini':
-        mini_samples = read_tsv_as_lst('data/sample_tsvs/mini_gam_names.tsv')
+        mini_samples = read_tsv_as_lst('/well/band/users/rbx225/GAMCC/data/sample_tsvs/mini_gam_names.tsv')
         hla = hla[hla['SampleID'].isin(mini_samples)].reset_index(drop = True)
     else:
         pass
