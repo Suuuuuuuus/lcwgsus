@@ -652,7 +652,7 @@ def plot_hla_allele_frequency(hla_alleles_df, gene):
     plt.show()
     return None
 
-def plot_hla_imputation_accuracy(hla, hla_dirs, labels, indices = None, cmap = CATEGORY_CMAP_STR, plot_onefield = True, save_fig=False, outdir=None, save_name=None):
+def plot_hla_imputation_accuracy(hla, hla_dirs, labels, indices = None, cmap = CATEGORY_CMAP_STR, plot_onefield = False, save_fig=False, outdir=None, save_name=None):
     hla_reports = []
     
     colors = plt.get_cmap(cmap).colors[:(len(labels))]
@@ -698,7 +698,7 @@ def plot_hla_imputation_accuracy(hla, hla_dirs, labels, indices = None, cmap = C
     if save_fig:
         check_outdir(outdir)
         p12.savefig(outdir + save_name)
-    return p12
+    return p12, report
 
 def plot_hla_imputation_accuracy_by_type(hla, hla_dirs, labels, title = 'HLA imputation accuracy by type', 
                                          cmap = CATEGORY_CMAP_STR, combine = True, 

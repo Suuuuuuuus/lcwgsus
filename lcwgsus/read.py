@@ -163,7 +163,7 @@ def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all'
     hla['One field1'] = ''
     hla['Two field1'] = ''
 
-    hla = hla.apply(resolve_ambiguous_hla_type, args = (unique_two_field), axis = 1)
+    hla = hla.apply(resolve_ambiguous_hla_type, args = (unique_two_field,), axis = 1)
     hla = hla.drop(columns = ['Included Alleles', 'G code'])
 
     for s in hla['SampleID'].unique():
@@ -191,7 +191,7 @@ def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all'
     return hla
 
 def read_hla_lc_imputation_results(indir, combined = True, recode_two_field = True, retain = 'fv'):
-    if 'batch' in indir:
+    if ('batch' in indir) or ('method' in indir) or ('optimal' in indir):
         batch = True
     else:
         batch = False
