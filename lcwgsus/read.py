@@ -191,10 +191,10 @@ def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all'
     return hla
 
 def read_hla_lc_imputation_results(indir, combined = True, recode_two_field = True, retain = 'fv'):
-    if ('batch' in indir) or ('method' in indir) or ('optimal' in indir):
-        batch = True
-    else:
+    if 'vcf.gz' in indir:
         batch = False
+    else:
+        batch = True
 
     if retain == 'fv':
         retained_samples = read_tsv_as_lst('data/sample_tsvs/fv_idt_names.tsv')
