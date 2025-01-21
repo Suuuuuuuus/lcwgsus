@@ -190,7 +190,7 @@ def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all'
         pass
     return hla
 
-def read_hla_lc_imputation_results(indir, combined = True, recode_two_field = True, retain = 'fv'):
+def read_hla_lc_imputation_results(indir, combined = 'combined', recode_two_field = True, retain = 'fv'):
     if 'vcf.gz' in indir:
         batch = False
     else:
@@ -210,16 +210,20 @@ def read_hla_lc_imputation_results(indir, combined = True, recode_two_field = Tr
     imputed_lst = []
     for g in HLA_GENES:
         if not batch:
-            if combined:
+            if combined == 'combined':
                 imputed = pd.read_csv(indir + g + '/quilt.hla.output.combined.topresult.txt', sep = '\t')
+            elif combined == 'read':
+                imputed = pd.read_csv(indir + g + '/quilt.hla.output.onlyreads.topresult.txt', sep = '\t')
             else:
                 imputed = pd.read_csv(indir + g + '/quilt.hla.output.onlystates.topresult.txt', sep = '\t')
         else:
             subdirs = os.listdir(indir)
             imputed_ary = []
             for d in subdirs:
-                if combined:
+                if combined == 'combined':
                     imputed_ary.append(pd.read_csv(indir + d + '/' + g + '/quilt.hla.output.combined.topresult.txt', sep = '\t'))
+                elif combined == 'read':
+                    imputed_ary.append(pd.read_csv(indir + d + '/' + g + '/quilt.hla.output.onlyreads.topresult.txt', sep = '\t'))
                 else:
                     imputed_ary.append(pd.read_csv(indir + d + '/' + g + '/quilt.hla.output.onlystates.topresult.txt', sep = '\t'))
             imputed = pd.concat(imputed_ary)

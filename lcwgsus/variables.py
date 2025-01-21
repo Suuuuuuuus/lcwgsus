@@ -52,9 +52,9 @@ LC_SAMPLE_PREFIX = 'GM'
 CHIP_SAMPLE_PREFIX = 'GAM'
 SEQ_SAMPLE_PREFIX = 'IDT'
 
-SAMPLE_LINKER_FILE = 'data/metadata/sample_linker.csv'
-G_CODE_FILE = 'data/hla_direct_sequencing/hla_nom_g.txt'
-AMBIGUOUS_G_CODE_FILE = 'data/hla_direct_sequencing/ambiguous_G_codes.tsv'
+SAMPLE_LINKER_FILE = '/well/band/users/rbx225/GAMCC/data/metadata/sample_linker.csv'
+G_CODE_FILE = '/well/band/users/rbx225/GAMCC/data/hla_direct_sequencing/hla_nom_g.txt'
+AMBIGUOUS_G_CODE_FILE = '/well/band/users/rbx225/GAMCC/data/hla_direct_sequencing/ambiguous_G_codes.tsv'
 
 MAF_ARY = np.array([
             0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05,
