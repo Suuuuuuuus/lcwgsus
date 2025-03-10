@@ -23,7 +23,7 @@ pd.options.mode.chained_assignment = None
 from .auxiliary import *
 from .variables import *
 
-__all__ = ["save_vcf", "rezip_vcf", "save_lst"]
+__all__ = ["save_vcf", "rezip_vcf", "save_lst", "write_db_as_fasta"]
 
 
 def save_vcf(df,
@@ -92,3 +92,9 @@ def save_lst(file, lst):
         for item in lst:
             file.write("%s\n" % item)
     return None
+
+def write_db_as_fasta(name, fake_chr, ofile):
+    with open(ofile, 'w') as file:
+        file.write(f">HLA-{name}\n")
+        for i in range(0, len(fake_chr), 80):
+            file.write(fake_chr[i:i+80] + "\n")

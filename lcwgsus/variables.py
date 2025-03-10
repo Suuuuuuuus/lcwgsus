@@ -65,6 +65,8 @@ CASE_CONTROLS = ['non-malaria_control', 'mild_malaria', 'severe_malaria']
 ETHNICITIES = ['fula', 'jola', 'mandinka', 'wollof']
 
 HLA_GENES = ['A', 'B', 'C', 'DQB1', 'DRB1']
+HLA_GENES_ALL = ['A', 'B', 'C', 'DMA', 'DMB', 'DOA', 'DOB', 'DPA1', 'DPB1', 'DPB2', 'DQA1', 'DQA2', 'DQB1', 'DRA', 'DRB1', 'DRB5', 'E', 'F', 'G', 'HFE', 'H', 'J', 'L', 'MICA', 'MICB', 'TAP1', 'TAP2', 'V']
+HLA_GENES_ALL_EXPANDED = ['A', 'B', 'C', 'DMA', 'DMB', 'DOA', 'DOB', 'DPA1', 'DPA2', 'DPB1', 'DPB2', 'DQA1', 'DQA2', 'DQB1', 'DQB2', 'DRA', 'DRB1', 'DRB3', 'DRB4', 'DRB5', 'E', 'F', 'G', 'H', 'HFE', 'J', 'K', 'L', 'MICA', 'MICB', 'N', 'P', 'R', 'S', 'T', 'TAP1', 'TAP2', 'U', 'V', 'W', 'Y']
 HLA_LOCI = [i+'1' for i in HLA_GENES] + [i+'2' for i in HLA_GENES]
 
 HLA_DIRECT_SEQUENCING_FILE = '/well/band/users/rbx225/GAMCC/data/hla_direct_sequencing/HLA_direct_sequencing_all.csv'

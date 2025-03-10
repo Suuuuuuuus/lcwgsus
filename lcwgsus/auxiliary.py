@@ -38,9 +38,11 @@ __all__ = ["get_mem", "check_outdir", "generate_af_axis",
            "intersect_dfs", "resolve_common_samples", "fix_v_metrics",
            "extract_info", "encode_genotype", "valid_sample",
            "extract_DS", "extract_format", "drop_cols",
-           "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP", "get_rl_distribution",
-           "extract_LDS", "extract_LDS_to_DS", "reorder_cols",
-           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "clean_hla",  "check_one_field_match", "check_two_field_match", "check_two_field_match_by_type", "compare_hla_types", "compare_hla_types_by_type", "group_top_n_alleles", "extract_hla_vcf_alleles_one_sample", "recode_two_field_to_g_code"]
+           "convert_to_chip_format", "extract_GT", "extract_GP", "retain_likely_GP", 
+           "get_rl_distribution", "extract_LDS", "extract_LDS_to_DS", "reorder_cols", 
+           "merge_two_field", "merge_two_field_succinct", "retain_smallest_two_field", 
+           "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "clean_hla", 
+           "check_one_field_match", "check_two_field_match", "check_two_field_match_by_type", "compare_hla_types", "compare_hla_types_by_type", "group_top_n_alleles", "extract_hla_vcf_alleles_one_sample", "recode_two_field_to_g_code", "extract_unique_two_field_resolution_from_hlatypes"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -580,3 +582,86 @@ def recode_two_field_to_g_code(r, g_code_df):
     if len(tmp) == 1:
         r['Two field2'] = tmp['Two field'].values[0]
     return r
+
+def merge_two_field(s):
+    if s == 'N/A':
+        return s
+    if '/' in s:
+        converted_ary = []
+        alleles = s.split(' ')
+        for allele in alleles:
+            parts = allele.split('/')
+            twofield = sorted([part.split(':')[1] for part in parts])
+            twofield = sorted(twofield, key=lambda part: int(re.sub(r'[^0-9]', '', part)))
+            onefield = parts[0].split('/')[0].split(':')[0]
+            converted = f"{onefield}:{'/'.join(twofield)}"
+            converted_ary.append(converted)
+        return ' '.join(converted_ary)
+    else:
+        return s
+
+def merge_two_field_succinct(s):
+    if s == 'N/A':
+        return s
+    if '/' in s:
+        converted_ary = []
+        alleles = s.split(' ')
+        for allele in alleles:
+            parts = allele.split('/')
+            onefield = parts[0].split('/')[0].split(':')[0]
+            for i in range(1, len(parts)):
+                parts[i] = f"{onefield}:{parts[i]}"
+            
+            twofield = sorted([part.split(':')[1] for part in parts])
+            twofield = sorted(twofield, key=lambda part: int(re.sub(r'[^0-9]', '', part)))
+            
+            converted = f"{onefield}:{'/'.join(twofield)}"
+            converted_ary.append(converted)
+        return ' '.join(converted_ary)
+    else:
+        return s
+
+def retain_smallest_two_field(s):
+    if (s == 'N/A') or (s == '-9'):
+        return s
+    elif ' ' in s:
+        tmp = s.split(' ')[0]
+        if '/' in tmp:
+            return tmp.split('/')[0]
+    elif '/' in s:
+        return s.split('/')[0]
+    else:
+        return s
+
+def extract_unique_two_field_resolution_from_hlatypes(hlatypes, gene):
+    alleles = hlatypes[f'HLA-{gene} 1'].tolist() + hlatypes[f'HLA-{gene} 2'].tolist()
+    alleles = np.unique(np.array(alleles))
+    all_alleles = []
+    for a in alleles:
+        if (a == '-9') or (a == 'N/A') or (a == '') or (a == 'None') or (a == np.nan):
+            pass
+        elif ' ' in a:
+            parts = a.split(' ')
+            for part in parts:
+                elements = part.split('/')
+                onefield = elements[0].split(':')[0]
+                for e in elements:
+                    if ':' not in e:
+                        all_alleles.append(f'{onefield}:{e}')
+                    else:
+                        all_alleles.append(e)
+        elif '/' in a:
+            onefield = a.split('/')[0].split(':')[0]
+            for e in a.split('/'):
+                if ':' not in e:
+                    all_alleles.append(f'{onefield}:{e}')
+                else:
+                    all_alleles.append(e)
+        else:
+            all_alleles.append(a)
+    all_alleles = np.array(all_alleles)
+    all_alleles = np.where(all_alleles == "NaN", np.nan, all_alleles)
+    mask = np.vectorize(lambda x: isinstance(x, str) and ('*' not in x) and (':' in x))(all_alleles)
+    all_alleles = all_alleles[mask]
+    all_alleles = np.unique(all_alleles)
+    return all_alleles
