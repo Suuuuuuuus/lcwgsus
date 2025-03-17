@@ -453,17 +453,17 @@ def clean_hla(r, locis = HLA_LOCI):
             r[i] = ":".join(allele.split(':', 2)[:2])
     return r
 
-def check_one_field_match(typed, imputed, ix):
+def check_one_field_match(typed, imputed, ix, max_match = 2):
     colnames = ['One field1', 'One field2']
     typedalleles = set(typed.loc[ix, colnames])
     imputedalleles = set(imputed.loc[ix, colnames])
     if typedalleles == imputedalleles:
-        typed.loc[ix, 'One field match'] = 2
+        typed.loc[ix, 'One field match'] = min(2, max_match)
     else:
-        typed.loc[ix, 'One field match'] = len(typedalleles.intersection(imputedalleles))
+        typed.loc[ix, 'One field match'] = min(len(typedalleles.intersection(imputedalleles)), max_match)
     return typed
 
-def check_two_field_match(typed, imputed, ix):
+def check_two_field_match(typed, imputed, ix, max_match = 2):
     typedallele1 = set(typed.loc[ix, 'Two field1'].split('/'))
     typedallele2 = set(typed.loc[ix, 'Two field2'].split('/'))
     imputedallele1 = set(imputed.loc[ix, 'Two field1'].split('/'))
@@ -476,7 +476,7 @@ def check_two_field_match(typed, imputed, ix):
         len(typedallele1.intersection(imputedallele2))
     ]]
 
-    typed.loc[ix, 'Two field match'] = max(c11 + c22, c21 + c12)
+    typed.loc[ix, 'Two field match'] = min(max(c11 + c22, c21 + c12), max_match)
     return typed
 
 def check_two_field_match_by_type(df, typed_l, imputed_l, ix):
@@ -505,8 +505,11 @@ def check_two_field_match_by_type(df, typed_l, imputed_l, ix):
         df.loc[t2, i1] += 1        
     return df
 
-def compare_hla_types(typed, imputed):
+def compare_hla_types(typed, imputed, exclude_alleles = None, placeholder_ary = ['-9', '', 'N/A']):
     typed = typed.copy().sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
+    if exclude_alleles is not None:
+        typed['Two field1'] = typed.apply(lambda row: '-9' if row['Two field1'] in exclude_alleles.get(row['Locus'], []) else row['Two field1'], axis=1)
+        typed['Two field2'] = typed.apply(lambda row: '-9' if row['Two field2'] in exclude_alleles.get(row['Locus'], []) else row['Two field2'], axis=1)
     imputed = imputed.copy().sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
 
     samples = imputed['SampleID'].unique()
@@ -514,9 +517,12 @@ def compare_hla_types(typed, imputed):
     
     typed['One field match'] = 0
     typed['Two field match'] = 0
+    typed['Two field total'] = 0
     for ix in range(len(typed)):
-        typed = check_one_field_match(typed, imputed, ix)
-        typed = check_two_field_match(typed, imputed, ix)   
+        max_match = 2 - (typed.loc[ix, 'Two field1'] in placeholder_ary) - (typed.loc[ix, 'Two field1'] in placeholder_ary)
+        typed.loc[ix, 'Two field total'] = max_match
+        typed = check_one_field_match(typed, imputed, ix, max_match)
+        typed = check_two_field_match(typed, imputed, ix, max_match)   
     return typed
 
 def compare_hla_types_by_type(typed, imputed):

@@ -31,7 +31,8 @@ __all__ = [
     "calculate_v_imputation_accuracy", "average_v_metrics",
     "generate_v_impacc", "calculate_weighted_average", "average_impacc_by_chr",
     "round_to_nearest_magnitude", "calculate_imputation_summary_metrics",
-    "calculate_imputation_sumstats", "calculate_shannon_entropy", "calculate_hla_concordance", "calculate_hla_concordance_by_type", "generate_hla_imputation_report", "calculate_hla_entropy", "calculate_hla_imputation_accuracy"
+    "calculate_imputation_sumstats", "calculate_shannon_entropy", "calculate_hla_concordance", "calculate_hla_concordance_by_type", 
+    "generate_hla_imputation_report", "calculate_hla_entropy", "calculate_hla_imputation_accuracy"
 ]
 
 # To clean
@@ -453,8 +454,8 @@ def calculate_shannon_entropy(str_lst):
     return shannon_index
 
 def calculate_hla_concordance(df):
-    ccd_one = df['One field match'].sum()/(df.shape[0]*2)
-    ccd_two = df['Two field match'].sum()/(df.shape[0]*2)
+    ccd_one = df['One field match'].sum()/(df['Two field total'].sum())
+    ccd_two = df['Two field match'].sum()/(df['Two field total'].sum())
     return [ccd_one, ccd_two]
 
 def calculate_hla_concordance_by_type(ccd_dict, verbose = False):
@@ -508,7 +509,7 @@ def calculate_hla_entropy(hla_alleles_df):
                            'Number of ambiguous type from SBT': n_ambiguous})
     return summary
 
-def calculate_hla_imputation_accuracy(indir, hla, label, combined = 'combined', recode_two_field = True, retain = 'fv'):
+def calculate_hla_imputation_accuracy(indir, hla, label, exclude_alleles = None, combined = 'combined', recode_two_field = True, retain = 'fv'):
     if indir[-1] == '/':
         source = 'lc'
     else:
@@ -522,6 +523,6 @@ def calculate_hla_imputation_accuracy(indir, hla, label, combined = 'combined', 
         print('Invalid source input.')
         return None
     
-    compared = compare_hla_types(hla, imputed)
+    compared = compare_hla_types(hla, imputed, exclude_alleles)
     hla_report = generate_hla_imputation_report(compared, label)
     return hla_report
