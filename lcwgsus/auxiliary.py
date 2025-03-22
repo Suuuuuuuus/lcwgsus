@@ -42,7 +42,7 @@ __all__ = ["get_mem", "check_outdir", "generate_af_axis",
            "get_rl_distribution", "extract_LDS", "extract_LDS_to_DS", "reorder_cols", 
            "merge_two_field", "merge_two_field_succinct", "retain_smallest_two_field", 
            "convert_to_violin", "combine_violins", "bcftools_get_samples", "remove_superscripts", "resolve_ambiguous_hla_type", "check_letter", "check_column", "clean_hla", 
-           "check_one_field_match", "check_two_field_match", "check_two_field_match_by_type", "compare_hla_types", "compare_hla_types_by_type", "group_top_n_alleles", "extract_hla_vcf_alleles_one_sample", "recode_two_field_to_g_code", "extract_unique_two_field_resolution_from_hlatypes"]
+           "check_one_field_match", "check_two_field_match", "check_two_field_match_by_type", "compare_hla_types", "compare_hla_types_by_type", "group_top_n_alleles", "extract_hla_vcf_alleles_one_sample", "recode_two_field_to_g_code", "extract_unique_two_field_resolution_from_hlatypes", "extract_unique_twofield"]
 
 def get_mem() -> None:
     ### Print current memory usage
@@ -671,3 +671,6 @@ def extract_unique_two_field_resolution_from_hlatypes(hlatypes, gene):
     all_alleles = all_alleles[mask]
     all_alleles = np.unique(all_alleles)
     return all_alleles
+
+def extract_unique_twofield(ary):
+    return np.unique(np.array([':'.join(a.split(':')[:2]) for a in ary]))

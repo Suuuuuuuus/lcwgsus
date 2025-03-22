@@ -652,7 +652,7 @@ def plot_hla_allele_frequency(hla_alleles_df, gene):
     plt.show()
     return None
 
-def plot_hla_imputation_accuracy(hla, hla_dirs, labels, exclude_alleles = None, indices = None, cmap = CATEGORY_CMAP_STR, plot_onefield = False, save_fig=False, outdir=None, save_name=None):
+def plot_hla_imputation_accuracy(hla, hla_dirs, labels, exclude_alleles = None, combined = 'combined', mode = 'old', indices = None, cmap = CATEGORY_CMAP_STR, plot_onefield = False, save_fig=False, outdir=None, save_name=None):
     hla_reports = []
     
     colors = plt.get_cmap(cmap).colors[:(len(labels))]
@@ -664,7 +664,7 @@ def plot_hla_imputation_accuracy(hla, hla_dirs, labels, exclude_alleles = None, 
         labels = [labels[i] for i in indices]
         
     for d, l in zip(hla_dirs, labels):
-        report = calculate_hla_imputation_accuracy(d, hla, l, exclude_alleles)
+        report = calculate_hla_imputation_accuracy(d, hla, l, exclude_alleles = exclude_alleles, combined = combined, mode = mode)
         hla_reports.append(report)
     report = pd.concat(hla_reports)
     report['Locus'] = pd.Categorical(report['Locus'], categories=HLA_GENES[::-1], ordered=True)

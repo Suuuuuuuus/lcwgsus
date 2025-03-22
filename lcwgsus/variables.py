@@ -52,6 +52,13 @@ LC_SAMPLE_PREFIX = 'GM'
 CHIP_SAMPLE_PREFIX = 'GAM'
 SEQ_SAMPLE_PREFIX = 'IDT'
 
+FV_IDT_NAMES_FILE = '/well/band/users/rbx225/GAMCC/data/sample_tsvs/fv_idt_names.tsv'
+FV_GM_NAMES_FILE = '/well/band/users/rbx225/GAMCC/data/sample_tsvs/fv_gm_names.tsv'
+FV_GAM_NAMES_FILE = '/well/band/users/rbx225/GAMCC/data/sample_tsvs/fv_gam_names.tsv'
+MINI_IDT_NAMES_FILE = '/well/band/users/rbx225/GAMCC/data/sample_tsvs/mini_idt_names.tsv'
+MINI_GM_NAMES_FILE = '/well/band/users/rbx225/GAMCC/data/sample_tsvs/mini_gm_names.tsv'
+MINI_GAM_NAMES_FILE = '/well/band/users/rbx225/GAMCC/data/sample_tsvs/mini_gam_names.tsv'
+
 SAMPLE_LINKER_FILE = '/well/band/users/rbx225/GAMCC/data/metadata/sample_linker.csv'
 G_CODE_FILE = '/well/band/users/rbx225/GAMCC/data/hla_direct_sequencing/hla_nom_g.txt'
 AMBIGUOUS_G_CODE_FILE = '/well/band/users/rbx225/GAMCC/data/hla_direct_sequencing/ambiguous_G_codes.tsv'

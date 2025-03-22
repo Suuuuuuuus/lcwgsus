@@ -190,7 +190,7 @@ def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all'
         pass
     return hla
 
-def read_hla_lc_imputation_results(indir, combined = 'combined', recode_two_field = True, retain = 'fv'):
+def read_hla_lc_imputation_results(indir, combined = 'combined', mode = 'old', recode_two_field = False, retain = 'fv'):
     if 'vcf.gz' in indir:
         batch = False
     else:
@@ -210,22 +210,21 @@ def read_hla_lc_imputation_results(indir, combined = 'combined', recode_two_fiel
     imputed_lst = []
     for g in HLA_GENES:
         if not batch:
-            if combined == 'combined':
-                imputed = pd.read_csv(indir + g + '/quilt.hla.output.combined.topresult.txt', sep = '\t')
-            elif combined == 'read':
-                imputed = pd.read_csv(indir + g + '/quilt.hla.output.onlyreads.topresult.txt', sep = '\t')
-            else:
-                imputed = pd.read_csv(indir + g + '/quilt.hla.output.onlystates.topresult.txt', sep = '\t')
+            imputed = pd.read_csv(f'{indir}{g}/quilt.hla.output.{combined}.topresult.txt', sep = '\t')
         else:
             subdirs = os.listdir(indir)
             imputed_ary = []
             for d in subdirs:
-                if combined == 'combined':
-                    imputed_ary.append(pd.read_csv(indir + d + '/' + g + '/quilt.hla.output.combined.topresult.txt', sep = '\t'))
-                elif combined == 'read':
-                    imputed_ary.append(pd.read_csv(indir + d + '/' + g + '/quilt.hla.output.onlyreads.topresult.txt', sep = '\t'))
-                else:
-                    imputed_ary.append(pd.read_csv(indir + d + '/' + g + '/quilt.hla.output.onlystates.topresult.txt', sep = '\t'))
+                if mode == 'test':
+                    tmp = pd.read_csv(f'{indir}{d}/{g}/quilt.hla.output.onlystates.topresult.txt', sep = '\t')
+                    prob = tmp.loc[0, 'post_prob']
+                    if prob <= 0.05:
+                        combined = 'onlyreads'
+                    elif prob >= 0.95:
+                        combined = 'onlystates'
+                    else:
+                        combined = 'combined'
+                imputed_ary.append(pd.read_csv(f'{indir}{d}/{g}/quilt.hla.output.{combined}.topresult.txt', sep = '\t'))
             imputed = pd.concat(imputed_ary)
             
         imputed = imputed[['sample_name', 'bestallele1', 'bestallele2', 'post_prob']]
@@ -254,18 +253,18 @@ def read_hla_chip_imputation_results(vcf, recode_two_field = 'True', retain = 'f
     source = vcf.split('/')[-2].split('_')[0]
     if source == 'lc':
         if retain == 'fv':
-            retained_samples = read_tsv_as_lst('data/sample_tsvs/fv_gm_names.tsv')
+            retained_samples = read_tsv_as_lst(FV_GM_NAMES_FILE)
         elif retain == 'mini':
-            retained_samples = read_tsv_as_lst('data/sample_tsvs/mini_gm_names.tsv')
+            retained_samples = read_tsv_as_lst(MINI_GM_NAMES_FILE)
         else:
-            retained_samples = read_tsv_as_lst('data/sample_tsvs/fv_gm_names.tsv') + read_tsv_as_lst('data/sample_tsvs/mini_gm_names.tsv')
+            retained_samples = read_tsv_as_lst(FV_GM_NAMES_FILE) + read_tsv_as_lst(MINI_GM_NAMES_FILE)
     elif source == 'chip':
         if retain == 'fv':
-            retained_samples = read_tsv_as_lst('data/sample_tsvs/fv_gam_names.tsv')
+            retained_samples = read_tsv_as_lst(FV_GAM_NAMES_FILE)
         elif retain == 'mini':
-            retained_samples = read_tsv_as_lst('data/sample_tsvs/mini_gam_names.tsv')
+            retained_samples = read_tsv_as_lst(MINI_GAM_NAMES_FILE)
         else:
-            retained_samples = read_tsv_as_lst('data/sample_tsvs/fv_gam_names.tsv') + read_tsv_as_lst('data/sample_tsvs/mini_gam_names.tsv')
+            retained_samples = read_tsv_as_lst(FV_GAM_NAMES_FILE) + read_tsv_as_lst(MINI_GAM_NAMES_FILE)
     else:
         print('Invalid source input.')
         return None
