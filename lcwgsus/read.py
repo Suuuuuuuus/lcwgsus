@@ -26,7 +26,7 @@ pd.options.mode.chained_assignment = None
 from .auxiliary import *
 from .variables import *
 
-__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af", "read_hla_direct_sequencing", "read_hla_lc_imputation_results", "read_hla_chip_imputation_results"]
+__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af", "read_hla_direct_sequencing", "read_hla_lc_imputation_results", "read_hla_chip_imputation_results", "read_hla_lc_imputation_results_all"]
 
 def read_metadata(file, filetype = 'gzip', comment = '#', new_cols = None):
     if filetype == 'gzip':
@@ -315,3 +315,53 @@ def read_hla_chip_imputation_results(vcf, recode_two_field = 'True', retain = 'f
 
         df = df.apply(recode_two_field_to_g_code, axis = 1, args = (g_code,))
     return df
+
+def read_hla_lc_imputation_results_all(indir, combined = 'combined', mode = 'old', recode_two_field = False):
+    if 'vcf.gz' in indir:
+        batch = False
+    else:
+        batch = True
+
+    retained_samples = lcwgsus.read_tsv_as_lst('data/sample_tsvs/fv_idt_names.tsv')
+    sample_linker = pd.read_csv(SAMPLE_LINKER_FILE)
+    sample_linker = sample_linker[sample_linker['Seq_Name'].isin(retained_samples)]
+    sample_linker = {k:v for k, v in zip(sample_linker['Seq_Name'], sample_linker['Chip_Name'])}
+    
+    imputed_lst = []
+    for g in HLA_GENES:
+        if not batch:
+            imputed = pd.read_csv(f'{indir}{g}/quilt.hla.output.{combined}.all.txt', sep = '\t')
+        else:
+            subdirs = os.listdir(indir)
+            imputed_ary = []
+            for d in subdirs:
+                if mode == 'test':
+                    tmp = pd.read_csv(f'{indir}{d}/{g}/quilt.hla.output.onlystates.all.txt', sep = '\t')
+                    prob = tmp.loc[0, 'post_prob']
+                    if prob <= 0.05:
+                        combined = 'onlyreads'
+                    elif prob >= 0.95:
+                        combined = 'onlystates'
+                    else:
+                        combined = 'combined'
+                imputed_ary.append(pd.read_csv(f'{indir}{d}/{g}/quilt.hla.output.{combined}.all.txt', sep = '\t'))
+            imputed = pd.concat(imputed_ary)
+            
+        imputed = imputed[['sample_name', 'bestallele1', 'bestallele2', 'post_prob']]
+        imputed['Locus'] = g
+        imputed.columns = ['SampleID', 'Two field1', 'Two field2', 'prob', 'Locus']
+        imputed = imputed[imputed['SampleID'].isin(retained_samples)]
+        imputed['SampleID'] = imputed['SampleID'].apply(lambda x: sample_linker[x])
+
+        imputed['Two field1'] = imputed['Two field1'].str.split('*').str.get(1)
+        imputed['Two field2'] = imputed['Two field2'].str.split('*').str.get(1)
+
+        imputed_lst.append(imputed)
+        
+    imputed = pd.concat(imputed_lst).sort_values(by = ['SampleID', 'Locus']).reset_index(drop = True)
+    imputed = imputed[['SampleID', 'Locus', 'Two field1', 'Two field2', 'prob']]
+
+    if recode_two_field:
+        g_code = pd.read_csv(AMBIGUOUS_G_CODE_FILE, sep = '\t')[['Locus', 'Two field']]
+        imputed = imputed.apply(recode_two_field_to_g_code, axis = 1, args = (g_code,))
+    return imputed

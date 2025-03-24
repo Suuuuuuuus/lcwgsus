@@ -63,6 +63,9 @@ SAMPLE_LINKER_FILE = '/well/band/users/rbx225/GAMCC/data/metadata/sample_linker.
 G_CODE_FILE = '/well/band/users/rbx225/GAMCC/data/hla_direct_sequencing/hla_nom_g.txt'
 AMBIGUOUS_G_CODE_FILE = '/well/band/users/rbx225/GAMCC/data/hla_direct_sequencing/ambiguous_G_codes.tsv'
 
+HLA_GENE_INFORMATION_FILE = '/well/band/users/rbx225/software/QUILT_sus/hla_ancillary_files/hla_gene_information.tsv'
+HLA_GENE_INFORMATION_FILE_EXPANDED = '/well/band/users/rbx225/software/QUILT_sus/hla_ancillary_files/hla_gene_information_expanded.tsv'
+
 MAF_ARY = np.array([
             0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05,
             0.1, 0.2, 0.5, 0.95, 1
