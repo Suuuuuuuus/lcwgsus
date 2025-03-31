@@ -509,7 +509,7 @@ def calculate_hla_entropy(hla_alleles_df):
                            'Number of ambiguous type from SBT': n_ambiguous})
     return summary
 
-def calculate_hla_imputation_accuracy(indir, hla, label, exclude_alleles = None, combined = 'combined', mode = 'old', recode_two_field = False, retain = 'fv'):
+def calculate_hla_imputation_accuracy(indir, hla, label, ct = 0, exclude_alleles = None, combined = 'combined', mode = 'old', recode_two_field = False, retain = 'fv'):
     if indir[-1] == '/':
         source = 'lc'
     else:
@@ -523,6 +523,23 @@ def calculate_hla_imputation_accuracy(indir, hla, label, exclude_alleles = None,
         print('Invalid source input.')
         return None
     
+    original_N = []
+    for g in HLA_GENES:
+        n = imputed[imputed['Locus'] == g].shape[0]
+        original_N = original_N + [n, n]
+    
+    imputed = imputed[imputed['prob'] >= ct]
+    hla = hla.iloc[imputed.index,:]
+    
+    cr = []
+    for i, g in enumerate(HLA_GENES):
+        n = imputed[imputed['Locus'] == g].shape[0]
+        cr = cr + [n/original_N[2*i], n/original_N[2*i]]
+    
     compared = compare_hla_types(hla, imputed, exclude_alleles)
     hla_report = generate_hla_imputation_report(compared, label)
+    hla_report['CR'] = cr
+    hla_report['CT'] = ct
+    
+    hla_report = hla_report[['Source', 'Locus', 'Resolution', 'CT', 'CR', 'Concordance']]
     return hla_report
