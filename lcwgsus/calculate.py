@@ -509,7 +509,7 @@ def calculate_hla_entropy(hla_alleles_df):
                            'Number of ambiguous type from SBT': n_ambiguous})
     return summary
 
-def calculate_hla_imputation_accuracy(indir, hla, label, exclude_alleles = None, combined = 'combined', mode = 'old', recode_two_field = True, retain = 'fv'):
+def calculate_hla_imputation_accuracy(indir, hla, label, exclude_alleles = None, combined = 'combined', mode = 'old', recode_two_field = False, retain = 'fv'):
     if indir[-1] == '/':
         source = 'lc'
     else:
