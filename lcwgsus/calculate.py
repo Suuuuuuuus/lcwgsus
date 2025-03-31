@@ -24,15 +24,16 @@ from .read import *
 
 __all__ = [
     "calculate_per_bin_kmer_error_rate", "calculate_af", "calculate_ss_cumsum_coverage",
-    "calculate_average_info_score",
-    "calculate_corrcoef", "calculate_concordance",
-    "calculate_imputation_accuracy_metrics", "average_h_metrics",
-    "calculate_h_imputation_accuracy", "generate_h_impacc",
-    "calculate_v_imputation_accuracy", "average_v_metrics",
-    "generate_v_impacc", "calculate_weighted_average", "average_impacc_by_chr",
+    "calculate_average_info_score", "calculate_corrcoef", "calculate_concordance",
+    "calculate_imputation_accuracy_metrics", 
+    "average_h_metrics", "calculate_h_imputation_accuracy", "generate_h_impacc",
+    "calculate_v_imputation_accuracy", "average_v_metrics", "generate_v_impacc", 
+    "calculate_weighted_average", "average_impacc_by_chr",
     "round_to_nearest_magnitude", "calculate_imputation_summary_metrics",
-    "calculate_imputation_sumstats", "calculate_shannon_entropy", "calculate_hla_concordance", "calculate_hla_concordance_by_type", 
-    "generate_hla_imputation_report", "calculate_hla_entropy", "calculate_hla_imputation_accuracy"
+    "calculate_imputation_sumstats", "calculate_shannon_entropy", 
+    "calculate_hla_concordance", "calculate_hla_concordance_by_type", 
+    "generate_hla_imputation_report", "calculate_hla_entropy", 
+    "calculate_hla_imputation_accuracy", "multi_calculate_hla_imputation_accuracy"
 ]
 
 # To clean
@@ -528,8 +529,9 @@ def calculate_hla_imputation_accuracy(indir, hla, label, ct = 0, exclude_alleles
         n = imputed[imputed['Locus'] == g].shape[0]
         original_N = original_N + [n, n]
     
-    imputed = imputed[imputed['prob'] >= ct]
-    hla = hla.iloc[imputed.index,:]
+    if source == 'lc':
+        imputed = imputed[imputed['prob'] >= ct]
+        hla = hla.iloc[imputed.index,:]
     
     cr = []
     for i, g in enumerate(HLA_GENES):
@@ -542,4 +544,32 @@ def calculate_hla_imputation_accuracy(indir, hla, label, ct = 0, exclude_alleles
     hla_report['CT'] = ct
     
     hla_report = hla_report[['Source', 'Locus', 'Resolution', 'CT', 'CR', 'Concordance']]
+    return hla_report
+
+def multi_calculate_hla_imputation_accuracy(hla, hla_dirs, labels, modes, 
+                                            indices = None, cts = [0, 0.5, 0.9],
+                                            exclude_alleles = None, combined = 'combined', 
+                                            recode_two_field = False, retain = 'fv'):
+    dfss = []
+    if indices is None:
+        indices = range(len(hla_dirs))
+        
+    for i in indices:
+        dfs = []
+        indir = hla_dirs[i]
+        label = labels[i]
+        mode = modes[i]
+        for ct in cts:
+            r = calculate_hla_imputation_accuracy(indir, hla, label, ct = ct, 
+                                                          exclude_alleles = exclude_alleles, combined = combined, 
+                                                          mode = mode, recode_two_field = recode_two_field, 
+                                                          retain = retain)
+            r = r[r['Resolution'] == 'Two field'].drop(columns = 'Resolution')
+            r = r.set_index(['Source', 'Locus'])
+            r = r.set_index('CT', append=True).unstack(level=-1).swaplevel(0, 1, axis=1)
+            dfs.append(r)
+        hla_report = pd.concat(dfs, axis = 1)
+        dfss.append(hla_report)
+
+    hla_report = pd.concat(dfss, axis = 0)
     return hla_report

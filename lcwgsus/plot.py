@@ -16,6 +16,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import matplotlib.patches as mpatches
+import matplotlib.lines as mlines
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 import statsmodels.api as sm
@@ -34,8 +36,12 @@ from .read import *
 from .process import *
 
 __all__ = [
-    "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw", "plot_imputation_accuracy_by_genotype",  "combine_imputation_accuracy_plots", "plot_imputation_accuracy_sequential",
-    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", "plot_imputation_metric_in_region", "plot_hla_diversity", "plot_hla_allele_frequency", "plot_hla_imputation_accuracy", "plot_hla_imputation_accuracy_by_type"
+    "save_figure", "plot_afs", "plot_imputation_accuracy_typed", "plot_imputation_accuracy_gw", "plot_imputation_accuracy_gw_grant_version",
+    "plot_imputation_accuracy_by_genotype",  "combine_imputation_accuracy_plots", "plot_imputation_accuracy_sequential",
+    "plot_sequencing_skew", "plot_info_vs_af", "plot_r2_vs_info", "plot_pc", "plot_violin", "plot_rl_distribution", 
+    "plot_imputation_metric_in_region", "plot_hla_diversity", "plot_hla_allele_frequency",
+    "plot_hla_imputation_accuracy", "plot_hla_imputation_accuracy_lc", "plot_hla_imputation_accuracy_chip", 
+    "plot_hla_imputation_accuracy_by_type"
 ]
 
 def save_figure(save: bool, outdir: str, name: str) -> None:
@@ -442,6 +448,63 @@ def plot_imputation_accuracy_by_genotype(impacc,
     save_figure(save_fig, outdir, save_name)
     return fig
 
+def plot_imputation_accuracy_gw_grant_version(impacc_lst,
+                                metric='r2',
+                                labels=None,
+                                threshold=None,
+                                title='',
+                                marker_size=50,
+                                line_colors=CATEGORY_CMAP_HEX,
+                                save_fig=False,
+                                outdir=None,
+                                save_name=None):
+    cols = ['AF', metric, metric + '_AC']
+    df_lst = [impacc[cols] for impacc in impacc_lst]
+
+    fig = plt.figure(figsize=(6, 5), dpi = 300)
+    ax = fig.add_subplot(111)
+    plt.grid(False)
+
+    fmt = lambda x, pos: '{:.0e}'.format(x)
+
+    for i in range(len(df_lst)):
+        triplet = df_lst[i]
+        if threshold is not None:
+            triplet = triplet[triplet['AF'] >= threshold]
+        c0, c1, c2 = tuple(list(triplet.columns))
+
+        label = c1 if labels is None else labels[i]
+
+        x = np.arange(triplet.shape[0])
+        afs = generate_af_axis(triplet[c0].values)
+        vals = triplet[c1]
+        allele_counts = triplet[c2]
+
+        if i == len(df_lst) - 1:
+            plt.plot(x, vals, label=label, c = line_colors[i], linewidth = 3.5)
+        else:
+            plt.plot(x, vals, label=label, c = line_colors[i])
+        
+        plt.xticks(x, afs, rotation=45)
+
+        im = ax.scatter(x,
+                        vals,
+                        c='black',
+                        s=marker_size)
+        
+    plt.xlabel('GnomAD allele frequencies (%)')
+    plt.title(title)
+    ax.legend(
+        framealpha=1,
+        prop={'size': 9}
+    )
+    plt.ylabel('Aggregated imputation accuracy ($r^2$)')
+    ax.grid()
+    fig.tight_layout()
+
+    save_figure(save_fig, outdir, save_name)
+    return fig
+
 def combine_imputation_accuracy_plots(fig1, 
                                       fig2, 
                                       inset_position=[0.395, 0.2, 0.382, 0.37], 
@@ -655,13 +718,13 @@ def plot_hla_allele_frequency(hla_alleles_df, gene):
 def plot_hla_imputation_accuracy(hla, hla_dirs, labels, exclude_alleles = None, combined = 'combined', mode = 'old', indices = None, cmap = CATEGORY_CMAP_STR, plot_onefield = False, save_fig=False, outdir=None, save_name=None):
     hla_reports = []
     
-    colors = plt.get_cmap(cmap).colors[:(len(labels))]
-    hex_codes = [mcolors.to_hex(color) for color in colors]
-    colors = dict(zip(labels, hex_codes))
-    
     if indices is not None:
         hla_dirs = [hla_dirs[i] for i in indices]
         labels = [labels[i] for i in indices]
+        
+    colors = plt.get_cmap(cmap).colors[:(len(labels))]
+    hex_codes = [mcolors.to_hex(color) for color in colors]
+    colors = dict(zip(labels, hex_codes))
         
     for d, l in zip(hla_dirs, labels):
         report = calculate_hla_imputation_accuracy(d, hla, l, exclude_alleles = exclude_alleles, combined = combined, mode = mode)
@@ -754,3 +817,92 @@ def plot_hla_imputation_accuracy_by_type(hla, hla_dirs, labels, title = 'HLA imp
     save_figure(save_fig, outdir, save_name)
     plt.show()
     return None
+
+def plot_hla_imputation_accuracy_lc(hla, hla_dirs, labels, modes, 
+                                  indices = None, cts = [0, 0.5, 0.9],
+                                  exclude_alleles = None, combined = 'combined', 
+                                  recode_two_field = False, retain = 'fv', shapes = ['v', 'o', '^'],
+                                  cmap = CATEGORY_CMAP_STR, save_fig=False, outdir=None, save_name=None):
+    
+    hla_report = multi_calculate_hla_imputation_accuracy(hla, hla_dirs, labels, modes, indices,
+                                                         cts, exclude_alleles, combined, recode_two_field, retain)
+    
+    xaxis = np.arange(1, 6)/5
+    offsets = [-0.05, 0, 0.05]
+    
+    if indices is not None:
+        labels = [labels[i] for i in indices]
+        
+    colors = plt.get_cmap(CATEGORY_CMAP_STR).colors[:(len(labels))]
+    hex_codes = [mcolors.to_hex(color) for color in colors]
+    colors = dict(zip(labels, hex_codes))
+
+    for i, l in enumerate(labels):
+        for j, ct in enumerate(cts):
+            tmp = hla_report.loc[(l,),(ct,'Concordance')].values
+            plt.scatter(xaxis + offsets[j], tmp, c = colors[l], marker = shapes[j])
+
+    ax = plt.gca()       
+
+    color_legend = [mpatches.Patch(color=colors[l], label=l) for i, l in enumerate(labels)]
+    legend1 = ax.legend(handles=color_legend, title="Run", loc="lower left")
+
+    shape_legend = [mlines.Line2D([], [], color='black', marker=s, linestyle='None', markersize=8, 
+                                  label=f'CT = {cts[i]}') for i, s in enumerate(shapes)]
+    legend2 = ax.legend(handles=shape_legend, title="Shapes", loc="lower left", bbox_to_anchor=(0, 0.25))
+
+    ax.add_artist(legend1)
+
+    plt.xlabel('Genes')
+    plt.ylabel('Concordance')
+    plt.xticks(xaxis, HLA_GENES)
+    plt.ylim((0.4, 1.02))
+    plt.grid(alpha = 0.7)
+    
+    save_figure(save_fig, outdir, save_name)
+    plt.show()
+    return hla_report
+
+def plot_hla_imputation_accuracy_chip(hla, hla_dirs, labels, modes, 
+                                  indices = None, cts = [0, 0.5, 0.9],
+                                  exclude_alleles = None, combined = 'combined', 
+                                  recode_two_field = False, retain = 'fv', shapes = ['v', 'o', '^'],
+                                  cmap = CATEGORY_CMAP_STR, save_fig=False, outdir=None, save_name=None):
+    
+    hla_reports = []
+    if indices is not None:
+        hla_dirs = [hla_dirs[i] for i in indices]
+        labels = [labels[i] for i in indices]
+        
+    colors = plt.get_cmap(cmap).colors[:(len(labels))]
+    hex_codes = [mcolors.to_hex(color) for color in colors]
+    colors = dict(zip(labels, hex_codes))
+        
+    for d, l in zip(hla_dirs, labels):
+        report = calculate_hla_imputation_accuracy(d, hla, l, exclude_alleles = exclude_alleles)
+        hla_reports.append(report)
+    report = pd.concat(hla_reports)
+    report = report.sort_values(by = 'Locus')
+    hla_report = report[report['Resolution'] == 'Two field'].reset_index(drop = True)
+    
+    xaxis = np.arange(1, 6)/5
+
+    for i, l in enumerate(labels):
+        tmp = hla_report[hla_report['Source'] == l]['Concordance'].values
+        plt.scatter(xaxis, tmp, c = colors[l], marker = 'o')
+
+    ax = plt.gca()       
+
+    color_legend = [mpatches.Patch(color=colors[l], label=l) for i, l in enumerate(labels)]
+    legend1 = ax.legend(handles=color_legend, title="Run", loc="lower left")
+    ax.add_artist(legend1)
+
+    plt.xlabel('Genes')
+    plt.ylabel('Concordance')
+    plt.xticks(xaxis, HLA_GENES)
+    plt.ylim((0.4, 1.02))
+    plt.grid(alpha = 0.7)
+    
+    save_figure(save_fig, outdir, save_name)
+    plt.show()
+    return hla_report
