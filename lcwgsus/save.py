@@ -23,7 +23,7 @@ pd.options.mode.chained_assignment = None
 from .auxiliary import *
 from .variables import *
 
-__all__ = ["save_vcf", "rezip_vcf", "save_lst", "write_db_as_fasta"]
+__all__ = ["save_vcf", "rezip_vcf", "save_lst", "write_db_as_fasta", "write_db_as_fasta_per_allele"]
 
 
 def save_vcf(df,
@@ -98,3 +98,11 @@ def write_db_as_fasta(name, fake_chr, ofile):
         file.write(f">HLA-{name}\n")
         for i in range(0, len(fake_chr), 80):
             file.write(fake_chr[i:i+80] + "\n")
+
+def write_db_as_fasta_per_allele(db, ofile):
+    with open(ofile, 'w') as file:
+        for a in db.columns:
+            seq = ''.join(db[a].tolist()).replace('.', '-').replace('*', 'N')
+            file.write(f">HLA-{a}\n")
+            for i in range(0, len(seq), 80):
+                file.write(seq[i:i+80] + "\n")
