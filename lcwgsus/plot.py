@@ -275,7 +275,7 @@ def plot_imputation_accuracy_typed(impacc_lst,
                     format=FuncFormatter(fmt),
                     label='Allele frequency counts')
 
-        plt.xlabel('GnomAD allele frequencies (%)')
+        plt.xlabel('gnomAD allele frequencies (%)')
         plt.title(title)
         ax.legend(
             loc = 'upper right',
@@ -351,7 +351,7 @@ def plot_imputation_accuracy_gw(impacc_lst,
                     format=FuncFormatter(fmt),
                     label='Allele frequency counts')
 
-        plt.xlabel('GnomAD allele frequencies (%)')
+        plt.xlabel('gnomAD allele frequencies (%)')
         plt.title(title)
         ax.legend(
             loc = 'upper right',
@@ -437,7 +437,7 @@ def plot_imputation_accuracy_by_genotype(impacc,
                     format=FuncFormatter(fmt),
                     label='Allele frequency counts')
 
-        plt.xlabel('GnomAD allele frequencies (%)')
+        plt.xlabel('gnomAD allele frequencies (%)')
         plt.title(title)
         ax.legend(
             loc = 'upper right',
@@ -497,7 +497,7 @@ def plot_imputation_accuracy_gw_grant_version(impacc_lst,
                         c='black',
                         s=marker_size)
         
-    plt.xlabel('GnomAD allele frequencies (%)')
+    plt.xlabel('gnomAD allele frequencies (%)')
     plt.title(title)
     ax.legend(
         framealpha=1,
