@@ -157,27 +157,32 @@ def plot_r2_vs_info(df,
     return None
 
 
-def plot_pc(df, num_PC=2, save_fig=False, outdir=None, save_name=None) -> None:
+def plot_pc(df, num_PC=2, title = 'PCA Plot', 
+            colorbar_cmap=COLORBAR_CMAP, line_colors=CATEGORY_CMAP_HEX,
+            save_fig=False, outdir=None, save_name=None) -> None:
     # Input df has 'PC_1', 'PC_2', ... columns and an additional column called 'ethnic'
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(6, 6))
 
     PC1 = df.columns[df.columns.str.contains('PC')][0]
     PC2 = df.columns[df.columns.str.contains('PC')][1]
     if num_PC == 2:
         labels = df['ethnic']
         targets = labels.unique()
-        colors = plt.cm.rainbow(np.linspace(0, 1, len(targets)))
+        colors = plt.get_cmap(CATEGORY_CMAP_STR).colors[:(len(targets))]
+        hex_codes = [mcolors.to_hex(color) for color in colors]
+        colors = dict(zip(targets, hex_codes))
+    
         for target, color in zip(targets, colors):
             indices_to_keep = labels == target
             plt.scatter(
                 df.loc[indices_to_keep, PC1],
                 df.loc[indices_to_keep, PC2],
-                color=color,
+                color=colors[target],
                 label=target,
                 s=50,
             )
-        plt.legend()
-        plt.title('PCA Plot')
+        plt.legend(loc='lower right')
+        plt.title(title)
         plt.xlabel('PC 1')
         plt.ylabel('PC 2')
         plt.grid(True)
@@ -190,7 +195,7 @@ def plot_pc(df, num_PC=2, save_fig=False, outdir=None, save_name=None) -> None:
                                 "linewidth": 0,
                                 "shade": False
                             })
-        plot.suptitle('PCA Plot', y=1.02)
+        plot.suptitle(title, y=1.02)
     else:
         print("You should at least plot the first two PCs.")
 
