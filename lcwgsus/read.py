@@ -26,7 +26,10 @@ pd.options.mode.chained_assignment = None
 from .auxiliary import *
 from .variables import *
 
-__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af", "read_hla_direct_sequencing", "read_hla_lc_imputation_results", "read_hla_chip_imputation_results", "read_hla_lc_imputation_results_all"]
+__all__ = ["read_metadata", "read_vcf", "parse_vcf", "multi_parse_vcf", "read_af", "multi_read_af", 
+           "read_af_chunks", "read_af_per_file", "multi_read_af_chunks", 
+           "read_hla_direct_sequencing", "read_hla_lc_imputation_results", 
+           "read_hla_chip_imputation_results", "read_hla_lc_imputation_results_all"]
 
 def read_metadata(file, filetype = 'gzip', comment = '#', new_cols = None):
     if filetype == 'gzip':
@@ -156,6 +159,60 @@ def multi_read_af(chromosomes, files, combine = True):
     else:
         return res_lst
 
+def read_af_chunks(af_files, chunk_size = 1000000):
+    af_ary = []
+    for f in af_files:
+        reader = pd.read_csv(f, chunksize=chunk_size, sep = '\t', names = ['chromosome', 'position', 'ref', 'alt', 'MAF'],
+                              dtype = {
+                'chromosome': 'string',
+                'position': 'Int64',
+                'ref': 'string',
+                'alt': 'string',
+                'MAF': 'string'
+            })
+
+        chunk_ary = []
+        for chunk in reader:
+            tmp = chunk[chunk['MAF'] != 0]
+            chunk_ary.append(tmp)
+        af = pd.concat(chunk_ary).reset_index(drop = True)
+        af_ary.append(af)
+
+    af = pd.concat(af_ary).reset_index(drop = True) 
+    return af
+
+def read_af_per_file(f, chunk_size = 1000000):
+    reader = pd.read_csv(f, chunksize=chunk_size, sep = '\t', names = ['chromosome', 'position', 'ref', 'alt', 'MAF'],
+                          dtype = {
+            'chromosome': 'string',
+            'position': 'Int64',
+            'ref': 'string',
+            'alt': 'string',
+            'MAF': 'string'
+        })
+
+    chunk_ary = []
+    for chunk in reader:
+        tmp = chunk[chunk['MAF'] != 0]
+        chunk_ary.append(tmp)
+    af = pd.concat(chunk_ary).reset_index(drop = True)
+    return af
+
+def multi_read_af_chunks(af_files, chunk_size = 1000000, ncores = 1):
+    ncores = min(max(2*(len(os.sched_getaffinity(0))) - 1, 1), ncores)
+    with multiprocessing.Pool(processes=ncores) as pool:
+        results = pool.starmap(
+            read_af_per_file,
+            [(f, chunk_size) for f in af_files]
+        )
+    af_ary = []
+    
+    for af in results:
+        af_ary.append(af)
+        
+    af = pd.concat(af_ary).reset_index(drop = True)
+    return af 
+    
 def read_hla_direct_sequencing(file = HLA_DIRECT_SEQUENCING_FILE, retain = 'all', unique_two_field = True):
     hla = pd.read_csv(file)
     hla = hla[['SampleID', 'Locus', 'Included Alleles', 'G code']]
