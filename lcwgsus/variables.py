@@ -14,16 +14,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-import seaborn as sns
-import statsmodels.api as sm
-import scipy
-from typing import Union, Tuple, List
-from scipy.stats import poisson
-from scipy.stats import chi2
-from scipy.stats import friedmanchisquare
-from scipy.stats import studentized_range
 
 pd.options.mode.chained_assignment = None
+
+home_dir = os.environ.get("HOME_DIR")
 
 CHROMOSOMES_ALL = [str(i) for i in range(1,23)]
 
@@ -52,19 +46,19 @@ LC_SAMPLE_PREFIX = 'GM'
 CHIP_SAMPLE_PREFIX = 'GAM'
 SEQ_SAMPLE_PREFIX = 'IDT'
 
-FV_IDT_NAMES_FILE = '/well/band/users/rbx225/GAMCC/data/sample_tsvs/fv_idt_names.tsv'
-FV_GM_NAMES_FILE = '/well/band/users/rbx225/GAMCC/data/sample_tsvs/fv_gm_names.tsv'
-FV_GAM_NAMES_FILE = '/well/band/users/rbx225/GAMCC/data/sample_tsvs/fv_gam_names.tsv'
-MINI_IDT_NAMES_FILE = '/well/band/users/rbx225/GAMCC/data/sample_tsvs/mini_idt_names.tsv'
-MINI_GM_NAMES_FILE = '/well/band/users/rbx225/GAMCC/data/sample_tsvs/mini_gm_names.tsv'
-MINI_GAM_NAMES_FILE = '/well/band/users/rbx225/GAMCC/data/sample_tsvs/mini_gam_names.tsv'
+FV_IDT_NAMES_FILE = f'{home_dir}GAMCC/data/sample_tsvs/fv_idt_names.tsv'
+FV_GM_NAMES_FILE = f'{home_dir}GAMCC/data/sample_tsvs/fv_gm_names.tsv'
+FV_GAM_NAMES_FILE = f'{home_dir}GAMCC/data/sample_tsvs/fv_gam_names.tsv'
+MINI_IDT_NAMES_FILE = f'{home_dir}GAMCC/data/sample_tsvs/mini_idt_names.tsv'
+MINI_GM_NAMES_FILE = f'{home_dir}GAMCC/data/sample_tsvs/mini_gm_names.tsv'
+MINI_GAM_NAMES_FILE = f'{home_dir}GAMCC/data/sample_tsvs/mini_gam_names.tsv'
 
-SAMPLE_LINKER_FILE = '/well/band/users/rbx225/GAMCC/data/metadata/sample_linker.csv'
-G_CODE_FILE = '/well/band/users/rbx225/GAMCC/data/hla_direct_sequencing/hla_nom_g.txt'
-AMBIGUOUS_G_CODE_FILE = '/well/band/users/rbx225/GAMCC/data/hla_direct_sequencing/ambiguous_G_codes.tsv'
+SAMPLE_LINKER_FILE = f'{home_dir}GAMCC/data/metadata/sample_linker.csv'
+G_CODE_FILE = f'{home_dir}GAMCC/data/hla_direct_sequencing/hla_nom_g.txt'
+AMBIGUOUS_G_CODE_FILE = f'{home_dir}GAMCC/data/hla_direct_sequencing/ambiguous_G_codes.tsv'
 
-HLA_GENE_INFORMATION_FILE = '/well/band/users/rbx225/software/QUILT_sus/hla_ancillary_files/hla_gene_information.tsv'
-HLA_GENE_INFORMATION_FILE_EXPANDED = '/well/band/users/rbx225/software/QUILT_sus/hla_ancillary_files/hla_gene_information_expanded.tsv'
+HLA_GENE_INFORMATION_FILE = f'{home_dir}software/QUILT_sus/hla_ancillary_files/hla_gene_information.tsv'
+HLA_GENE_INFORMATION_FILE_EXPANDED = f'{home_dir}software/QUILT_sus/hla_ancillary_files/hla_gene_information_expanded.tsv'
 
 MAF_ARY = np.array([
             0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05,
@@ -79,7 +73,7 @@ HLA_GENES_ALL = ['A', 'B', 'C', 'DMA', 'DMB', 'DOA', 'DOB', 'DPA1', 'DPB1', 'DPB
 HLA_GENES_ALL_EXPANDED = ['A', 'B', 'C', 'DMA', 'DMB', 'DOA', 'DOB', 'DPA1', 'DPA2', 'DPB1', 'DPB2', 'DQA1', 'DQA2', 'DQB1', 'DQB2', 'DRA', 'DRB1', 'DRB3', 'DRB4', 'DRB5', 'E', 'F', 'G', 'H', 'HFE', 'J', 'K', 'L', 'MICA', 'MICB', 'N', 'P', 'R', 'S', 'T', 'TAP1', 'TAP2', 'U', 'V', 'W', 'Y']
 HLA_LOCI = [i+'1' for i in HLA_GENES] + [i+'2' for i in HLA_GENES]
 
-HLA_DIRECT_SEQUENCING_FILE = '/well/band/users/rbx225/GAMCC/data/hla_direct_sequencing/HLA_direct_sequencing_all.csv'
+HLA_DIRECT_SEQUENCING_FILE = f'{home_dir}GAMCC/data/hla_direct_sequencing/HLA_direct_sequencing_all.csv'
 
 COLORBAR_CMAP_STR = 'GnBu'
 COLORBAR_CMAP = plt.get_cmap(COLORBAR_CMAP_STR)
