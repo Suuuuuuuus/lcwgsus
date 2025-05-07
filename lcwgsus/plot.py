@@ -854,7 +854,7 @@ def plot_hla_imputation_accuracy_lc(hla, hla_dirs, labels, modes,
 
     shape_legend = [mlines.Line2D([], [], color='black', marker=s, linestyle='None', markersize=8, 
                                   label=f'CT = {cts[i]}') for i, s in enumerate(shapes)]
-    legend2 = ax.legend(handles=shape_legend, title="Shapes", loc="lower left", bbox_to_anchor=(0, 0.25))
+    legend2 = ax.legend(handles=shape_legend, title="Shapes", loc="lower left", bbox_to_anchor=(0, 0.3))
 
     ax.add_artist(legend1)
 
