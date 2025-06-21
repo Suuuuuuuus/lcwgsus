@@ -23,8 +23,13 @@ pd.options.mode.chained_assignment = None
 from .auxiliary import *
 from .variables import *
 
-__all__ = ["save_vcf", "rezip_vcf", "save_lst", "write_db_as_fasta", "write_db_as_fasta_per_allele"]
+__all__ = ["save_tsv", "save_vcf", "rezip_vcf", "save_lst", "write_db_as_fasta", "write_db_as_fasta_per_allele"]
 
+def save_tsv(file, save, outdir, name):
+    if save:
+        check_outdir(outdir)
+        file.to_csv(outdir + name, index = False, sep = '\t')
+    return None
 
 def save_vcf(df,
              metadata,
