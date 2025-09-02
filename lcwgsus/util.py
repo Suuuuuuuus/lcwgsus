@@ -35,15 +35,18 @@ from .variables import *
 from .calculate import *
 
 __all__ = [
-    "merge_metrics", "plot_hist_coverage", "plot_qc_metrics", "plot_sex_coverage",
+    "merge_metrics", "plot_hist_coverage", "plot_hist_hla_coverage", "plot_qc_metrics", "plot_sex_coverage",
     "visualise_single_variant", "visualise_single_variant_v2",
     "get_badly_imputed_regions", "get_n_variants_vcf", "get_n_variants_impacc", "calculate_bqsr_error_rate"
 ]
 
-def merge_metrics(cov_all, uncov_all, dup_all, sex_all, save=False, outdir=None, save_name=None):
+def merge_metrics(cov_all, uncov_all, dup_all, sex_all, hla_all, save=False, outdir=None, save_name=None):
     coverage = pd.read_csv(cov_all, sep = '\t', header = None)
     coverage.columns = ['sample', 'coverage']
-    
+
+    hla_coverage = pd.read_csv(hla_all, sep = '\t', header = None)
+    hla_coverage.columns = ['sample', 'hla_coverage']
+
     uncoverage = pd.read_csv(uncov_all, sep = '\t', header = None)
     uncoverage.columns = ['sample', 'uncoverage']
     
@@ -53,7 +56,8 @@ def merge_metrics(cov_all, uncov_all, dup_all, sex_all, save=False, outdir=None,
     sex = pd.read_csv(sex_all, sep = '\t', header = None)
     sex.columns = ['sample', 'chrX', 'chrY']
     
-    metrics = pd.merge(dup_rate, coverage, on = 'sample')
+    metrics = pd.merge(coverage, hla_coverage, on = 'sample')
+    metrics = pd.merge(metrics, dup_rate, on = 'sample')
     metrics = pd.merge(metrics, uncoverage, on = 'sample')
     metrics['skew'] = 0
     
@@ -78,6 +82,20 @@ def plot_hist_coverage(metrics, samples = None, save_fig=False, outdir=None, sav
     plt.figure(figsize=(8, 6), dpi = 300)
     plt.hist(metrics['coverage'], bins = 20, ec = 'black', alpha = 0.75)
     plt.xlabel('De-duplicated genome coverage (X)')
+    plt.ylabel('Counts')
+
+    save_figure(save_fig, outdir, save_name)
+    return None
+
+def plot_hist_hla_coverage(metrics, samples = None, save_fig=False, outdir=None, save_name=None):
+    metrics = pd.read_csv(metrics, sep = '\t')
+
+    if samples is not None:
+        metrics = metrics[metrics['sample'].isin(samples)].reset_index(drop = True)
+
+    plt.figure(figsize=(8, 6), dpi = 300)
+    plt.hist(metrics['hla_coverage'], bins = 20, ec = 'black', alpha = 0.75)
+    plt.xlabel('HLA coverage (X)')
     plt.ylabel('Counts')
 
     save_figure(save_fig, outdir, save_name)
